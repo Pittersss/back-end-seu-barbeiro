@@ -1,6 +1,9 @@
 package com.example.demo.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 
@@ -20,6 +23,8 @@ public class Barbearia {
 
     @Getter
     @Setter
+    @OneToOne
+    @JoinColumn(name = "id")
     private Barbeiro dono;
 
     @Getter

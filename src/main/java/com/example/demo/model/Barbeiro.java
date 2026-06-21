@@ -26,5 +26,7 @@ public class Barbeiro {
     @Setter
     private int toleranciaAtraso;
 
+    @Getter
+    @Setter
     private String senha;
 }
