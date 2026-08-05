@@ -2,7 +2,6 @@ package com.example.demo.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import lombok.*;
 import org.springframework.data.annotation.Id;
@@ -12,22 +11,22 @@ import org.springframework.data.annotation.Id;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Barbearia {
+public class BarberShop {
     @Id
     @Getter
     private long id;
 
     @Getter
     @Setter
-    private String nome;
+    private String name;
 
     @Getter
     @Setter
     @OneToOne
     @JoinColumn(name = "id")
-    private Barbeiro dono;
+    private Barber owner;
 
     @Getter
     @Setter
-    private String endereco;
+    private String address;
 }

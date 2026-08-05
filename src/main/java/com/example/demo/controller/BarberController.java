@@ -1,4 +1,4 @@
 package com.example.demo.controller;
 
-public class BarbeiroController {
+public class BarberController {
 }

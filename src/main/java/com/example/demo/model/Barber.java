@@ -1,5 +1,6 @@
 package com.example.demo.model;
 
+import com.example.demo.model.abstract_entities.User;
 import jakarta.persistence.Entity;
 import lombok.*;
 import org.springframework.data.annotation.Id;
@@ -9,24 +10,12 @@ import org.springframework.data.annotation.Id;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Barbeiro {
+public class Barber extends User {
     @Id
     @Getter
     private long id;
 
     @Getter
     @Setter
-    private String nome;
-
-    @Getter
-    @Setter
-    private String numero;
-
-    @Getter
-    @Setter
-    private int toleranciaAtraso;
-
-    @Getter
-    @Setter
-    private String senha;
+    private int delayTolerance;
 }
