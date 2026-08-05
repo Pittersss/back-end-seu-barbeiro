@@ -1,4 +1,4 @@
-package com.example.demo.model;
+package com.two_m.yourbarber.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;

@@ -1,9 +1,12 @@
-package com.example.demo.model;
+package com.two_m.yourbarber.model;
 
-import com.example.demo.model.abstract_entities.User;
+import com.two_m.yourbarber.model.abstract_entities.User;
 import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+
+import java.util.List;
 
 @Entity
 @Data
@@ -14,6 +17,11 @@ public class Barber extends User {
     @Id
     @Getter
     private long id;
+
+    @Getter
+    @Setter
+    @OneToMany(mappedBy = "id")
+    private List<Service> services;
 
     @Getter
     @Setter

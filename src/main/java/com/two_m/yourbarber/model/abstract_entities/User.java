@@ -1,4 +1,4 @@
-package com.example.demo.model.abstract_entities;
+package com.two_m.yourbarber.model.abstract_entities;
 
 import lombok.Getter;
 import lombok.Setter;

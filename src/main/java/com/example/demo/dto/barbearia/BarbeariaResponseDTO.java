@@ -1,4 +1,0 @@
-package com.example.demo.dto.barbearia;
-
-public class BarbeariaResponseDTO {
-}
