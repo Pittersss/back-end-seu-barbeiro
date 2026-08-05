@@ -2,6 +2,7 @@ package com.two_m.yourbarber.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToOne;
 import lombok.*;
 import org.springframework.data.annotation.Id;
@@ -25,6 +26,11 @@ public class BarberShop {
     @OneToOne
     @JoinColumn(name = "id")
     private Barber owner;
+
+    @Getter
+    @Setter
+    @ManyToMany
+    private Product product;
 
     @Getter
     @Setter
