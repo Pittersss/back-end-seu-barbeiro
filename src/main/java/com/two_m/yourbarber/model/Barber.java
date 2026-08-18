@@ -1,29 +1,34 @@
 package com.two_m.yourbarber.model;
 
-import com.two_m.yourbarber.model.abstract_entities.User;
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
-import lombok.*;
-import org.springframework.data.annotation.Id;
-
-import java.util.List;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 @Entity
-@Data
-@Builder
+@DiscriminatorValue("BARBER")
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
+@SuperBuilder
 public class Barber extends User {
-    @Id
-    @Getter
-    private long id;
 
-    @Getter
-    @Setter
-    @OneToMany(mappedBy = "id")
-    private List<Service> services;
+    private String phone;
 
-    @Getter
-    @Setter
+    private String pixKey;
+
+    @Builder.Default
+    private boolean available = true;
+
     private int delayTolerance;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "barber_shop_id")
+    private BarberShop barberShop;
 }

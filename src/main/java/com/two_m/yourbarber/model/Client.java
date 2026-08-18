@@ -1,11 +1,19 @@
 package com.two_m.yourbarber.model;
 
-import com.two_m.yourbarber.model.abstract_entities.User;
-import jakarta.persistence.Id;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
+@Entity
+@DiscriminatorValue("CLIENT")
+@Getter
+@Setter
+@NoArgsConstructor
+@SuperBuilder
 public class Client extends User {
-    @Id
-    @Getter
-    private long id;
+
+    private String phone;
 }
