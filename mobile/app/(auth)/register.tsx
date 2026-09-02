@@ -54,7 +54,7 @@ export default function RegisterScreen() {
           phone: phone || undefined,
         });
       }
-      router.push({ pathname: '/(auth)/confirm-code', params: { role } });
+      router.push({ pathname: '/(auth)/confirm-code', params: { role, email: email.trim() } });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Não foi possível concluir o cadastro.');
     } finally {

@@ -19,14 +19,25 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class Barber extends User {
 
-    private String phone;
-
     private String pixKey;
 
     @Builder.Default
     private boolean available = true;
 
     private int delayTolerance;
+
+    /** Daily working window, shared across every weekday. Hours are 0-24, wall clock. */
+    @Builder.Default private int workStartHour = 9;
+
+    @Builder.Default private int workEndHour = 18;
+
+    /**
+     * Optional daily break (e.g. lunch). Both null or both set; when set no appointment
+     * may overlap {@code [breakStartHour, breakEndHour)}.
+     */
+    private Integer breakStartHour;
+
+    private Integer breakEndHour;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "barber_shop_id")

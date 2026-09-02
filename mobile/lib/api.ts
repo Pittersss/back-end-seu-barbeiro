@@ -6,6 +6,14 @@ export function setAuthToken(token: string | null) {
   authToken = token;
 }
 
+let onUnauthorized: (() => void) | null = null;
+
+// Lets AuthContext react to a 401 (missing/invalid/stale token) by clearing
+// the session, instead of every screen having to handle it individually.
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  onUnauthorized = handler;
+}
+
 export class ApiError extends Error {
   status: number;
 
@@ -38,6 +46,9 @@ export async function request<T>(
   });
 
   if (!response.ok) {
+    if (response.status === 401 && authToken) {
+      onUnauthorized?.();
+    }
     throw new ApiError(response.status, await parseErrorMessage(response));
   }
 

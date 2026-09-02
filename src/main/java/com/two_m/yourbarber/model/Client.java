@@ -14,6 +14,6 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @SuperBuilder
 public class Client extends User {
-
-    private String phone;
+    // Client-specific fields would go here. `name`, `phone`, `avatarBase64` and
+    // credentials all live on User.
 }

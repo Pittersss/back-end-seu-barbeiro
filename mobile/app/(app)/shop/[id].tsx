@@ -4,10 +4,13 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Avatar } from '../../../components/Avatar';
 import { Button } from '../../../components/Button';
+import { Card } from '../../../components/Card';
+import { SectionHeader } from '../../../components/SectionHeader';
 import { getBarberShop, listShopBarbers } from '../../../lib/api/barbershops';
 import { listServices } from '../../../lib/api/services';
-import { formatCurrency, formatDuration, initials } from '../../../lib/format';
+import { formatCurrency, formatDuration } from '../../../lib/format';
 import type { Barber, BarberShop, Service } from '../../../lib/types';
 import { colors } from '../../../theme/colors';
 import { centeredPage } from '../../../theme/layout';
@@ -54,44 +57,67 @@ export default function ShopDetailScreen() {
     );
   }
 
+  const bookable = services.length > 0 && barbers.length > 0;
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
+      <View style={styles.topBar}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Ionicons name="chevron-back" size={24} color={colors.black} />
         </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.shopName}>{shop.name}</Text>
-        {shop.address ? <Text style={styles.shopMeta}>{shop.address}</Text> : null}
-        {shop.phone ? <Text style={styles.shopMeta}>{shop.phone}</Text> : null}
+        <View style={styles.hero}>
+          <View style={styles.heroCrest}>
+            <Ionicons name="cut" size={22} color={colors.blue} />
+          </View>
+          <Text style={styles.shopName}>{shop.name}</Text>
+          {shop.address ? (
+            <Text style={styles.shopMeta}>
+              <Ionicons name="location-outline" size={13} color={colors.textMuted} /> {shop.address}
+            </Text>
+          ) : null}
+          {shop.phone ? (
+            <Text style={styles.shopMeta}>
+              <Ionicons name="call-outline" size={13} color={colors.textMuted} /> {shop.phone}
+            </Text>
+          ) : null}
+          <View style={[styles.tag, { borderColor: shop.acceptingBarbers ? colors.success : colors.pillBorder }]}>
+            <Text style={[styles.tagText, { color: shop.acceptingBarbers ? colors.success : colors.textMuted }]}>
+              {shop.acceptingBarbers ? 'Aceitando novos barbeiros' : 'Equipe completa'}
+            </Text>
+          </View>
+        </View>
 
-        <Text style={styles.sectionTitle}>Serviços</Text>
+        <SectionHeader title="Serviços" />
         {services.length === 0 ? (
           <Text style={styles.empty}>Nenhum serviço disponível.</Text>
         ) : (
           services.map((service) => (
-            <View key={service.id} style={styles.serviceRow}>
+            <Card key={service.id} style={styles.serviceRow}>
               <View style={styles.serviceInfo}>
                 <Text style={styles.serviceName}>{service.name}</Text>
+                {service.description ? (
+                  <Text style={styles.serviceDesc} numberOfLines={2}>
+                    {service.description}
+                  </Text>
+                ) : null}
                 <Text style={styles.serviceMeta}>{formatDuration(service.durationMinutes)}</Text>
               </View>
               <Text style={styles.servicePrice}>{formatCurrency(service.price)}</Text>
-            </View>
+            </Card>
           ))
         )}
 
-        <Text style={styles.sectionTitle}>Barbeiros</Text>
+        <SectionHeader title="Barbeiros" />
         {barbers.length === 0 ? (
           <Text style={styles.empty}>Nenhum barbeiro disponível.</Text>
         ) : (
           <View style={styles.barbersRow}>
             {barbers.map((barber) => (
               <View key={barber.id} style={styles.barberChip}>
-                <View style={styles.barberAvatar}>
-                  <Text style={styles.barberAvatarText}>{initials(barber.name)}</Text>
-                </View>
+                <Avatar name={barber.name} avatarBase64={barber.avatarBase64} size={56} />
                 <Text style={styles.barberName} numberOfLines={1}>
                   {barber.name}
                 </Text>
@@ -104,8 +130,10 @@ export default function ShopDetailScreen() {
       <View style={styles.footer}>
         <Button
           title="Agendar Horário"
-          disabled={services.length === 0 || barbers.length === 0}
-          onPress={() => router.push({ pathname: '/(app)/book/[shopId]', params: { shopId: String(shopId) } })}
+          disabled={!bookable}
+          onPress={() =>
+            router.push({ pathname: '/(app)/book/[shopId]', params: { shopId: String(shopId) } })
+          }
         />
       </View>
     </SafeAreaView>
@@ -120,7 +148,7 @@ const styles = StyleSheet.create({
   loading: {
     flex: 1,
   },
-  header: {
+  topBar: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     ...centeredPage,
@@ -130,6 +158,18 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
     ...centeredPage,
   },
+  hero: {
+    alignItems: 'flex-start',
+  },
+  heroCrest: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.blueSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
   shopName: {
     ...typography.h1,
     color: colors.black,
@@ -137,13 +177,19 @@ const styles = StyleSheet.create({
   shopMeta: {
     fontSize: 14,
     color: colors.textMuted,
-    marginTop: 2,
+    marginTop: 4,
   },
-  sectionTitle: {
-    ...typography.h2,
-    color: colors.black,
-    marginTop: spacing.xl,
-    marginBottom: spacing.sm,
+  tag: {
+    borderWidth: 1.5,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    marginTop: spacing.sm,
+  },
+  tagText: {
+    ...typography.caption,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   empty: {
     color: colors.textMuted,
@@ -153,22 +199,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.pillBorder,
+    marginBottom: spacing.sm,
   },
   serviceInfo: {
     flex: 1,
+    marginRight: spacing.sm,
   },
   serviceName: {
     fontSize: 15,
     color: colors.black,
     fontWeight: '600',
   },
-  serviceMeta: {
+  serviceDesc: {
     fontSize: 12,
     color: colors.textMuted,
     marginTop: 2,
+  },
+  serviceMeta: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 4,
   },
   servicePrice: {
     fontFamily: typography.h2.fontFamily,
@@ -184,29 +234,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 72,
   },
-  barberAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.blue,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  barberAvatarText: {
-    color: colors.white,
-    fontFamily: typography.h2.fontFamily,
-    fontSize: 16,
-  },
   barberName: {
     fontSize: 12,
     color: colors.black,
     textAlign: 'center',
+    marginTop: 4,
   },
   footer: {
     padding: spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: colors.pillBorder,
+    borderTopColor: colors.line,
+    backgroundColor: colors.surface,
     ...centeredPage,
   },
 });

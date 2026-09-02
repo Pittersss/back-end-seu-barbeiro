@@ -13,21 +13,27 @@ import com.two_m.yourbarber.model.enums.AppointmentStatus;
 import com.two_m.yourbarber.model.enums.UserRole;
 import com.two_m.yourbarber.repository.AppointmentRepository;
 import com.two_m.yourbarber.repository.BarberRepository;
+import com.two_m.yourbarber.repository.ClientBlockRepository;
 import com.two_m.yourbarber.repository.ClientRepository;
 import com.two_m.yourbarber.repository.ServiceRepository;
+import com.two_m.yourbarber.repository.TimeBlockRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class AppointmentServiceImpl implements AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
     private final ClientRepository clientRepository;
     private final BarberRepository barberRepository;
     private final ServiceRepository serviceRepository;
+    private final TimeBlockRepository timeBlockRepository;
+    private final ClientBlockRepository clientBlockRepository;
 
     @Override
     public AppointmentResponseDTO createAppointment(AppointmentPostDTO dto, Long clientId) {
@@ -45,6 +51,21 @@ public class AppointmentServiceImpl implements AppointmentService {
                 || service.getBarberShop() == null
                 || !barber.getBarberShop().getId().equals(service.getBarberShop().getId())) {
             throw new BusinessRuleException("Barber does not offer this service");
+        }
+        if (clientBlockRepository.existsByBarberIdAndClientId(barber.getId(), client.getId())) {
+            throw new ForbiddenOperationException(
+                    "Você não pode agendar com este barbeiro no momento.");
+        }
+        LocalDateTime start = dto.getScheduledAt();
+        LocalDateTime end = start.plusMinutes(durationOf(service));
+        if (isOutsideWorkingHours(barber, start, end)) {
+            throw new BusinessRuleException("Fora do horário de atendimento do barbeiro.");
+        }
+        if (overlapsBreak(barber, start, end)) {
+            throw new BusinessRuleException("O barbeiro está em intervalo nesse horário.");
+        }
+        if (overlapsTimeBlock(barber.getId(), start, end)) {
+            throw new BusinessRuleException("O barbeiro bloqueou esse horário.");
         }
         if (hasSchedulingConflict(barber.getId(), dto.getScheduledAt(), service)) {
             throw new BusinessRuleException("Barber already has an appointment at that time");
@@ -94,8 +115,41 @@ public class AppointmentServiceImpl implements AppointmentService {
         if (!isParticipant) {
             throw new ForbiddenOperationException("You are not part of this appointment");
         }
+        if (appointment.getStatus() == AppointmentStatus.CANCELLED
+                || appointment.getStatus() == AppointmentStatus.COMPLETED) {
+            throw new BusinessRuleException("Este agendamento não pode mais ser cancelado.");
+        }
         appointment.setStatus(AppointmentStatus.CANCELLED);
         appointmentRepository.save(appointment);
+    }
+
+    private int durationOf(com.two_m.yourbarber.model.Service service) {
+        return service.getDurationMinutes() != null && service.getDurationMinutes() > 0
+                ? service.getDurationMinutes()
+                : 30;
+    }
+
+    private boolean isOutsideWorkingHours(Barber barber, LocalDateTime start, LocalDateTime end) {
+        LocalDateTime dayStart = start.toLocalDate().atTime(barber.getWorkStartHour(), 0);
+        LocalDateTime dayEnd =
+                barber.getWorkEndHour() >= 24
+                        ? start.toLocalDate().plusDays(1).atStartOfDay()
+                        : start.toLocalDate().atTime(barber.getWorkEndHour(), 0);
+        return start.isBefore(dayStart) || end.isAfter(dayEnd);
+    }
+
+    private boolean overlapsBreak(Barber barber, LocalDateTime start, LocalDateTime end) {
+        if (barber.getBreakStartHour() == null || barber.getBreakEndHour() == null) {
+            return false;
+        }
+        LocalDateTime breakStart = start.toLocalDate().atTime(barber.getBreakStartHour(), 0);
+        LocalDateTime breakEnd = start.toLocalDate().atTime(barber.getBreakEndHour(), 0);
+        return start.isBefore(breakEnd) && breakStart.isBefore(end);
+    }
+
+    private boolean overlapsTimeBlock(Long barberId, LocalDateTime start, LocalDateTime end) {
+        return timeBlockRepository.findByBarberId(barberId).stream()
+                .anyMatch(b -> start.isBefore(b.getEndsAt()) && b.getStartsAt().isBefore(end));
     }
 
     private boolean hasSchedulingConflict(

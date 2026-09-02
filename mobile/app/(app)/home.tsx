@@ -1,6 +1,6 @@
 import { useAuth } from '../../context/AuthContext';
-import { ClientHome } from './_client-home';
-import { BarberHome } from './_barber-home';
+import { ClientHome } from '../../components/ClientHome';
+import { BarberHome } from '../../components/BarberHome';
 
 export default function HomeScreen() {
   const { session } = useAuth();

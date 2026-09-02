@@ -4,6 +4,8 @@ import com.two_m.yourbarber.dto.auth.AuthResponseDTO;
 import com.two_m.yourbarber.dto.auth.LoginRequestDTO;
 import com.two_m.yourbarber.dto.auth.RegisterBarberDTO;
 import com.two_m.yourbarber.dto.auth.RegisterClientDTO;
+import com.two_m.yourbarber.dto.auth.ResendCodeDTO;
+import com.two_m.yourbarber.dto.auth.VerifyEmailDTO;
 import com.two_m.yourbarber.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,5 +38,16 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginRequestDTO dto) {
         return ResponseEntity.ok(authService.login(dto));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<AuthResponseDTO> verifyEmail(@Valid @RequestBody VerifyEmailDTO dto) {
+        return ResponseEntity.ok(authService.verifyEmail(dto));
+    }
+
+    @PostMapping("/resend-code")
+    public ResponseEntity<Void> resendCode(@Valid @RequestBody ResendCodeDTO dto) {
+        authService.resendCode(dto);
+        return ResponseEntity.ok().build();
     }
 }

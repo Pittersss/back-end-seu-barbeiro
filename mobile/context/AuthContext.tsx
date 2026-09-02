@@ -1,9 +1,18 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import * as authApi from '../lib/api/auth';
-import { setAuthToken } from '../lib/api';
+import { getMe } from '../lib/api/users';
+import { setAuthToken, setUnauthorizedHandler } from '../lib/api';
 import * as storage from '../lib/storage';
-import type { AuthResponse, LoginRequest, RegisterBarberRequest, RegisterClientRequest, UserRole } from '../lib/types';
+import type {
+  AuthResponse,
+  LoginRequest,
+  RegisterBarberRequest,
+  RegisterClientRequest,
+  ResendCodeRequest,
+  UserRole,
+  VerifyEmailRequest,
+} from '../lib/types';
 
 const STORAGE_KEY = 'seu-barbeiro-session';
 
@@ -12,14 +21,19 @@ interface Session {
   userId: number;
   role: UserRole;
   name: string;
+  avatarBase64?: string | null;
 }
 
 interface AuthContextValue {
   session: Session | null;
   isLoading: boolean;
   login: (payload: LoginRequest) => Promise<Session>;
-  registerClient: (payload: RegisterClientRequest) => Promise<Session>;
-  registerBarber: (payload: RegisterBarberRequest) => Promise<Session>;
+  registerClient: (payload: RegisterClientRequest) => Promise<void>;
+  registerBarber: (payload: RegisterBarberRequest) => Promise<void>;
+  verifyEmail: (payload: VerifyEmailRequest) => Promise<Session>;
+  resendCode: (payload: ResendCodeRequest) => Promise<void>;
+  /** Re-pull /api/users/me and fold name + avatar into the persisted session. */
+  refreshProfile: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -38,6 +52,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  async function clearSession() {
+    setAuthToken(null);
+    setSession(null);
+    await storage.deleteItem(STORAGE_KEY);
+  }
+
   useEffect(() => {
     (async () => {
       const stored = await storage.getItem(STORAGE_KEY);
@@ -48,6 +68,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setIsLoading(false);
     })();
+
+    // A 401 means the token is missing/invalid/stale (e.g. the account it
+    // belonged to was deleted) — drop the session instead of letting every
+    // screen's data fetch fail with an unhandled error.
+    setUnauthorizedHandler(() => {
+      clearSession();
+    });
+    return () => setUnauthorizedHandler(null);
   }, []);
 
   async function persist(next: Session) {
@@ -66,20 +94,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return next;
       },
       registerClient: async (payload) => {
-        const next = toSession(await authApi.registerClient(payload));
-        await persist(next);
-        return next;
+        await authApi.registerClient(payload);
       },
       registerBarber: async (payload) => {
-        const next = toSession(await authApi.registerBarber(payload));
+        await authApi.registerBarber(payload);
+      },
+      verifyEmail: async (payload) => {
+        const next = toSession(await authApi.verifyEmail(payload));
         await persist(next);
         return next;
       },
-      logout: async () => {
-        setAuthToken(null);
-        setSession(null);
-        await storage.deleteItem(STORAGE_KEY);
+      resendCode: async (payload) => {
+        await authApi.resendCode(payload);
       },
+      refreshProfile: async () => {
+        if (!session) return;
+        const profile = await getMe();
+        await persist({
+          ...session,
+          name: profile.name,
+          avatarBase64: profile.avatarBase64 ?? null,
+        });
+      },
+      logout: clearSession,
     }),
     [session, isLoading],
   );

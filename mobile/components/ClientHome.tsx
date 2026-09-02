@@ -4,13 +4,15 @@ import { useCallback, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useAuth } from '../../context/AuthContext';
-import { listBarberShops } from '../../lib/api/barbershops';
-import type { BarberShop } from '../../lib/types';
-import { colors } from '../../theme/colors';
-import { centeredPage } from '../../theme/layout';
-import { radius, spacing } from '../../theme/spacing';
-import { typography } from '../../theme/typography';
+import { Avatar } from './Avatar';
+import { Card } from './Card';
+import { useAuth } from '../context/AuthContext';
+import { listBarberShops } from '../lib/api/barbershops';
+import type { BarberShop } from '../lib/types';
+import { colors } from '../theme/colors';
+import { centeredPage } from '../theme/layout';
+import { spacing } from '../theme/spacing';
+import { typography } from '../theme/typography';
 
 export function ClientHome() {
   const { session } = useAuth();
@@ -21,6 +23,9 @@ export function ClientHome() {
   const load = useCallback(async () => {
     try {
       setShops(await listBarberShops());
+    } catch {
+      // A 401 here means the session was stale/invalid; AuthContext's
+      // unauthorized handler already clears it and redirects to login.
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -36,8 +41,13 @@ export function ClientHome() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.greeting}>Olá, {session?.name?.split(' ')[0]}</Text>
-        <Text style={styles.title}>Escolha sua barbearia</Text>
+        <View style={styles.greetingRow}>
+          <Avatar name={session?.name} avatarBase64={session?.avatarBase64} size={40} tone="black" />
+          <View>
+            <Text style={styles.greeting}>Olá, {session?.name?.split(' ')[0]}</Text>
+            <Text style={styles.title}>Escolha sua barbearia</Text>
+          </View>
+        </View>
       </View>
 
       <FlatList
@@ -52,20 +62,22 @@ export function ClientHome() {
         }
         renderItem={({ item }) => (
           <Pressable
-            style={styles.card}
+            style={({ pressed }) => pressed && styles.cardPressed}
             onPress={() => router.push({ pathname: '/(app)/shop/[id]', params: { id: String(item.id) } })}
           >
-            <View style={styles.cardIcon}>
-              <Ionicons name="cut" size={20} color={colors.white} />
-            </View>
-            <View style={styles.cardBody}>
-              <Text style={styles.cardTitle}>{item.name}</Text>
-              {item.address ? <Text style={styles.cardSubtitle}>{item.address}</Text> : null}
-              <Text style={[styles.cardStatus, { color: item.acceptingBarbers ? colors.success : colors.textMuted }]}>
-                {item.acceptingBarbers ? 'Aceitando novos barbeiros' : 'Equipe completa'}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textFaint} />
+            <Card style={styles.card}>
+              <View style={styles.cardIcon}>
+                <Ionicons name="cut" size={20} color={colors.blue} />
+              </View>
+              <View style={styles.cardBody}>
+                <Text style={styles.cardTitle}>{item.name}</Text>
+                {item.address ? <Text style={styles.cardSubtitle}>{item.address}</Text> : null}
+                <Text style={[styles.cardStatus, { color: item.acceptingBarbers ? colors.success : colors.textMuted }]}>
+                  {item.acceptingBarbers ? 'Aceitando novos barbeiros' : 'Equipe completa'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textFaint} />
+            </Card>
           </Pressable>
         )}
       />
@@ -83,6 +95,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
     ...centeredPage,
+  },
+  greetingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
   greeting: {
     color: colors.textMuted,
@@ -106,17 +123,15 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.pillBorder,
-    padding: spacing.md,
+  },
+  cardPressed: {
+    opacity: 0.7,
   },
   cardIcon: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.black,
+    backgroundColor: colors.blueSoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,

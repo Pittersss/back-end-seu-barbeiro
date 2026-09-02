@@ -93,6 +93,20 @@ class BarberShopServiceImplTest {
     }
 
     @Test
+    void listBarberShops_returnsAllMapped() {
+        Barber owner = barber(1L);
+        BarberShop shopOne = shop(5L, owner);
+        BarberShop shopTwo = shop(6L, owner);
+        when(barberShopRepository.findAll()).thenReturn(List.of(shopOne, shopTwo));
+
+        List<BarberShopResponseDTO> result = barberShopService.listBarberShops();
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getId()).isEqualTo(5L);
+        assertThat(result.get(1).getId()).isEqualTo(6L);
+    }
+
+    @Test
     void getBarberShop_found_returnsDto() {
         Barber owner = barber(1L);
         BarberShop shop = shop(5L, owner);

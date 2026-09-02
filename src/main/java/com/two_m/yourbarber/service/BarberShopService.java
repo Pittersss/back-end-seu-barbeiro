@@ -11,6 +11,8 @@ public interface BarberShopService {
 
     BarberShopRequestResponseDTO requestCreation(BarberShopRequestDTO dto, Long ownerId);
 
+    List<BarberShopResponseDTO> listBarberShops();
+
     BarberShopResponseDTO getBarberShop(Long id);
 
     BarberShopResponseDTO updateBarberShop(

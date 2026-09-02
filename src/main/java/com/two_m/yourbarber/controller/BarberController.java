@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,6 +35,12 @@ public class BarberController {
             @Valid @RequestBody BarberPostPutDTO dto,
             @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(barberService.updateBarber(id, dto, currentUser.getId()));
+    }
+
+    @PatchMapping("/{id}/availability")
+    public ResponseEntity<BarberResponseDTO> toggleAvailability(
+            @PathVariable Long id, @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(barberService.toggleAvailability(id, currentUser.getId()));
     }
 
     @DeleteMapping("/{id}")

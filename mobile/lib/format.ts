@@ -13,6 +13,30 @@ export function formatDateTime(iso: string): string {
   });
 }
 
+export function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('pt-BR', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+  });
+}
+
+export function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+/**
+ * ISO-like string in the device's local wall-clock time (no `Z`). The backend
+ * field is a `LocalDateTime`, so sending `toISOString()` (UTC) shifts the hour.
+ */
+export function toLocalIso(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}:00`
+  );
+}
+
 export function formatDuration(minutes: number): string {
   if (minutes < 60) return `${minutes} min`;
   const hours = Math.floor(minutes / 60);

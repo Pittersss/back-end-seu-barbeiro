@@ -1,17 +1,29 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button } from '../../components/Button';
-import { useAuth } from '../../context/AuthContext';
-import { getBarber } from '../../lib/api/barbers';
-import { getBarberShop, toggleAcceptingBarbers } from '../../lib/api/barbershops';
-import type { Barber, BarberShop } from '../../lib/types';
-import { colors } from '../../theme/colors';
-import { centeredPage } from '../../theme/layout';
-import { radius, spacing } from '../../theme/spacing';
-import { typography } from '../../theme/typography';
+import { Avatar } from './Avatar';
+import { Button } from './Button';
+import { Card } from './Card';
+import { useAuth } from '../context/AuthContext';
+import { getBarber } from '../lib/api/barbers';
+import { getBarberShop, toggleAcceptingBarbers } from '../lib/api/barbershops';
+import type { Barber, BarberShop } from '../lib/types';
+import { colors } from '../theme/colors';
+import { centeredPage } from '../theme/layout';
+import { spacing } from '../theme/spacing';
+import { typography } from '../theme/typography';
 
 export function BarberHome() {
   const { session } = useAuth();
@@ -31,6 +43,9 @@ export function BarberHome() {
       } else {
         setShop(null);
       }
+    } catch {
+      // A 401 here means the session was stale/invalid; AuthContext's
+      // unauthorized handler already clears it and redirects to login.
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -69,20 +84,39 @@ export function BarberHome() {
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
       >
-        <Text style={styles.greeting}>Olá, {session?.name?.split(' ')[0]}</Text>
-        <Text style={styles.title}>{isOwner ? 'Minha barbearia' : 'Painel do barbeiro'}</Text>
+        <View style={styles.greetingRow}>
+          <Avatar name={session?.name} avatarBase64={session?.avatarBase64} size={40} tone="black" />
+          <View>
+            <Text style={styles.greeting}>Olá, {session?.name?.split(' ')[0]}</Text>
+            <Text style={styles.title}>{isOwner ? 'Minha barbearia' : 'Painel do barbeiro'}</Text>
+          </View>
+        </View>
 
         {barber ? (
-          <View style={styles.card}>
-            <Text style={styles.cardLabel}>Status</Text>
-            <Text style={[styles.cardValue, { color: barber.available ? colors.success : colors.textMuted }]}>
-              {barber.available ? 'Disponível' : 'Indisponível'}
-            </Text>
-          </View>
+          <Pressable onPress={() => router.push('/(app)/availability')}>
+            <Card style={styles.card}>
+              <View style={styles.statusRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardLabel}>Disponibilidade</Text>
+                  <Text
+                    style={[
+                      styles.cardValue,
+                      { color: barber.available ? colors.success : colors.textMuted },
+                    ]}
+                  >
+                    {barber.available ? 'Disponível' : 'Indisponível'} ·{' '}
+                    {String(barber.workStartHour).padStart(2, '0')}h–
+                    {String(barber.workEndHour).padStart(2, '0')}h
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textFaint} />
+              </View>
+            </Card>
+          </Pressable>
         ) : null}
 
         {shop ? (
-          <View style={styles.card}>
+          <Card style={styles.card}>
             <Text style={styles.cardLabel}>{isOwner ? 'Sua barbearia' : 'Você faz parte de'}</Text>
             <Text style={styles.shopName}>{shop.name}</Text>
             {shop.address ? <Text style={styles.cardValue}>{shop.address}</Text> : null}
@@ -98,9 +132,9 @@ export function BarberHome() {
                 />
               </View>
             ) : null}
-          </View>
+          </Card>
         ) : (
-          <View style={styles.card}>
+          <Card style={styles.card}>
             <Text style={styles.cardLabel}>Barbearia</Text>
             <Text style={styles.cardValue}>
               Você ainda não faz parte de uma barbearia. Se você solicitou a criação de uma, ela
@@ -112,7 +146,7 @@ export function BarberHome() {
               onPress={() => router.push('/(auth)/register-shop')}
               style={styles.cardButton}
             />
-          </View>
+          </Card>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -131,6 +165,12 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     ...centeredPage,
   },
+  greetingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+  },
   greeting: {
     color: colors.textMuted,
     fontSize: 14,
@@ -139,15 +179,13 @@ const styles = StyleSheet.create({
     ...typography.h1,
     color: colors.black,
     marginTop: 2,
-    marginBottom: spacing.lg,
   },
   card: {
-    backgroundColor: colors.white,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.pillBorder,
-    padding: spacing.md,
     marginBottom: spacing.md,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   cardLabel: {
     ...typography.label,

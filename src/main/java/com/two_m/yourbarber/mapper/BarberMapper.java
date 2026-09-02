@@ -13,9 +13,14 @@ public final class BarberMapper {
                 .name(barber.getName())
                 .email(barber.getEmail())
                 .phone(barber.getPhone())
+                .avatarBase64(barber.getAvatarBase64())
                 .pixKey(barber.getPixKey())
                 .available(barber.isAvailable())
                 .delayTolerance(barber.getDelayTolerance())
+                .workStartHour(barber.getWorkStartHour())
+                .workEndHour(barber.getWorkEndHour())
+                .breakStartHour(barber.getBreakStartHour())
+                .breakEndHour(barber.getBreakEndHour())
                 .barberShopId(
                         barber.getBarberShop() != null ? barber.getBarberShop().getId() : null)
                 .build();

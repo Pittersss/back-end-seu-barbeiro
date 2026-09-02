@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.two_m.yourbarber.dto.auth.AuthResponseDTO;
 import com.two_m.yourbarber.dto.auth.LoginRequestDTO;
 import com.two_m.yourbarber.dto.auth.RegisterClientDTO;
+import com.two_m.yourbarber.dto.auth.ResendCodeDTO;
+import com.two_m.yourbarber.dto.auth.VerifyEmailDTO;
 import com.two_m.yourbarber.security.CustomUserDetailsService;
 import com.two_m.yourbarber.security.JwtTokenProvider;
 import com.two_m.yourbarber.service.AuthService;
@@ -89,5 +91,36 @@ class AuthControllerTest {
                                 .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value("token456"));
+    }
+
+    @Test
+    void verifyEmail_validRequest_returns200WithToken() throws Exception {
+        VerifyEmailDTO dto = new VerifyEmailDTO("jane@example.com", "123456");
+        when(authService.verifyEmail(any()))
+                .thenReturn(
+                        AuthResponseDTO.builder()
+                                .token("token789")
+                                .userId(1L)
+                                .role("CLIENT")
+                                .name("Jane")
+                                .build());
+
+        mockMvc.perform(
+                        post("/api/auth/verify-email")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("token789"));
+    }
+
+    @Test
+    void resendCode_validRequest_returns200() throws Exception {
+        ResendCodeDTO dto = new ResendCodeDTO("jane@example.com");
+
+        mockMvc.perform(
+                        post("/api/auth/resend-code")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk());
     }
 }

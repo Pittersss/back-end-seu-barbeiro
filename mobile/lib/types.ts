@@ -33,6 +33,15 @@ export interface RegisterBarberRequest {
   pixKey?: string;
 }
 
+export interface VerifyEmailRequest {
+  email: string;
+  code: string;
+}
+
+export interface ResendCodeRequest {
+  email: string;
+}
+
 export interface BarberShop {
   id: number;
   name: string;
@@ -71,9 +80,14 @@ export interface Barber {
   name: string;
   email: string;
   phone?: string;
+  avatarBase64?: string | null;
   pixKey?: string;
   available: boolean;
   delayTolerance: number;
+  workStartHour: number;
+  workEndHour: number;
+  breakStartHour: number | null;
+  breakEndHour: number | null;
   barberShopId?: number;
 }
 
@@ -82,7 +96,42 @@ export interface BarberPostPut {
   phone?: string;
   pixKey?: string;
   delayTolerance: number;
+  workStartHour: number;
+  workEndHour: number;
+  breakStartHour: number | null;
+  breakEndHour: number | null;
 }
+
+export interface TimeBlock {
+  id: number;
+  startsAt: string;
+  endsAt: string;
+  reason?: string | null;
+  barberId: number;
+}
+
+export interface TimeBlockPost {
+  startsAt: string;
+  endsAt: string;
+  reason?: string | null;
+}
+
+export interface BlockedClient {
+  id: number;
+  clientId: number;
+  clientName: string;
+  clientPhone?: string | null;
+  reason?: string | null;
+  createdAt: string;
+}
+
+export interface BlockClientPost {
+  clientId: number;
+  reason?: string | null;
+}
+
+/** Map of `YYYY-MM-DD` → bookable local-ISO start times for that day. */
+export type OpenSlots = Record<string, string[]>;
 
 export interface Service {
   id: number;
@@ -115,12 +164,27 @@ export interface AppointmentPost {
 }
 
 export interface PixQrCodeResponse {
-  appointmentId: number;
+  appointmentId: number | null;
   pixKey: string;
   amount: number;
   merchantName: string;
   merchantCity: string;
-  txId: string;
+  txId: string | null;
   pixCopyPaste: string;
   qrCodeBase64: string;
+}
+
+export interface UserProfile {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  phone?: string | null;
+  avatarBase64?: string | null;
+}
+
+export interface UpdateProfilePayload {
+  name: string;
+  phone?: string | null;
+  avatarBase64?: string | null;
 }

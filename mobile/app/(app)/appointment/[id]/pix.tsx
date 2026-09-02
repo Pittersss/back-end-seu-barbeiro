@@ -6,6 +6,8 @@ import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '../../../../components/Button';
+import { Card } from '../../../../components/Card';
+import { ApiError } from '../../../../lib/api';
 import { getPixQrCode } from '../../../../lib/api/pix';
 import { formatCurrency } from '../../../../lib/format';
 import type { PixQrCodeResponse } from '../../../../lib/types';
@@ -20,15 +22,33 @@ export default function PixScreen() {
 
   const [pix, setPix] = useState<PixQrCodeResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
+      let cancelled = false;
       (async () => {
         setLoading(true);
-        setPix(await getPixQrCode(appointmentId));
-        setLoading(false);
+        setError(null);
+        try {
+          const data = await getPixQrCode(appointmentId);
+          if (!cancelled) setPix(data);
+        } catch (err) {
+          if (!cancelled) {
+            setError(
+              err instanceof ApiError
+                ? err.message
+                : 'Não foi possível gerar o código Pix.',
+            );
+          }
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
       })();
+      return () => {
+        cancelled = true;
+      };
     }, [appointmentId]),
   );
 
@@ -39,10 +59,26 @@ export default function PixScreen() {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  if (loading || !pix) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
         <ActivityIndicator style={styles.loading} color={colors.black} />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !pix) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.errorWrap}>
+          <Ionicons name="alert-circle-outline" size={40} color={colors.textMuted} />
+          <Text style={styles.errorText}>{error ?? 'Código Pix indisponível.'}</Text>
+          <Button
+            title="Ver meus agendamentos"
+            variant="outline"
+            onPress={() => router.replace('/(app)/appointments')}
+          />
+        </View>
       </SafeAreaView>
     );
   }
@@ -53,13 +89,13 @@ export default function PixScreen() {
         <Text style={styles.title}>Pague com Pix</Text>
         <Text style={styles.amount}>{formatCurrency(pix.amount)}</Text>
 
-        <View style={styles.qrWrap}>
+        <Card style={styles.qrCard}>
           <Image
             source={{ uri: `data:image/png;base64,${pix.qrCodeBase64}` }}
             style={styles.qr}
             resizeMode="contain"
           />
-        </View>
+        </Card>
 
         <Text style={styles.label}>Pix copia e cola</Text>
         <Pressable style={styles.copyBox} onPress={handleCopy}>
@@ -70,11 +106,11 @@ export default function PixScreen() {
         </Pressable>
         {copied ? <Text style={styles.copiedHint}>Copiado!</Text> : null}
 
-        <View style={styles.merchantCard}>
+        <Card style={styles.merchantCard} padded>
           <Text style={styles.merchantRow}>Recebedor: {pix.merchantName}</Text>
           <Text style={styles.merchantRow}>Cidade: {pix.merchantCity}</Text>
           <Text style={styles.merchantRow}>Chave Pix: {pix.pixKey}</Text>
-        </View>
+        </Card>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -92,6 +128,19 @@ const styles = StyleSheet.create({
   loading: {
     flex: 1,
   },
+  errorWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+    padding: spacing.lg,
+    ...centeredPage,
+  },
+  errorText: {
+    color: colors.textMuted,
+    textAlign: 'center',
+    fontSize: 14,
+  },
   content: {
     padding: spacing.lg,
     alignItems: 'center',
@@ -108,19 +157,15 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     marginBottom: spacing.lg,
   },
-  qrWrap: {
-    width: 220,
-    height: 220,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.pillBorder,
+  qrCard: {
     alignItems: 'center',
     justifyContent: 'center',
+    padding: spacing.md,
     marginBottom: spacing.lg,
   },
   qr: {
-    width: 200,
-    height: 200,
+    width: 220,
+    height: 220,
   },
   label: {
     ...typography.label,
@@ -161,7 +206,8 @@ const styles = StyleSheet.create({
   footer: {
     padding: spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: colors.pillBorder,
+    borderTopColor: colors.line,
+    backgroundColor: colors.surface,
     ...centeredPage,
   },
 });

@@ -19,9 +19,11 @@ import com.two_m.yourbarber.repository.BarberShopRequestRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class BarberShopServiceImpl implements BarberShopService {
 
     private final BarberShopRepository barberShopRepository;
@@ -45,6 +47,11 @@ public class BarberShopServiceImpl implements BarberShopService {
                         .build();
 
         return BarberShopMapper.toRequestDto(barberShopRequestRepository.save(request));
+    }
+
+    @Override
+    public List<BarberShopResponseDTO> listBarberShops() {
+        return barberShopRepository.findAll().stream().map(BarberShopMapper::toDto).toList();
     }
 
     @Override

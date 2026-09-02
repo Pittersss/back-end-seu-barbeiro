@@ -2,6 +2,7 @@ package com.two_m.yourbarber.service.barber;
 
 import com.two_m.yourbarber.dto.barber.BarberPostPutDTO;
 import com.two_m.yourbarber.dto.barber.BarberResponseDTO;
+import com.two_m.yourbarber.exception.BusinessRuleException;
 import com.two_m.yourbarber.exception.ForbiddenOperationException;
 import com.two_m.yourbarber.exception.ResourceNotFoundException;
 import com.two_m.yourbarber.mapper.BarberMapper;
@@ -25,12 +26,25 @@ public class BarberServiceImpl implements BarberService {
     public BarberResponseDTO updateBarber(Long id, BarberPostPutDTO dto, Long requesterId) {
         Barber barber = findBarber(id);
         assertSelf(barber, requesterId);
+        validateWorkingHours(dto);
 
         barber.setName(dto.getName());
         barber.setPhone(dto.getPhone());
         barber.setPixKey(dto.getPixKey());
         barber.setDelayTolerance(dto.getDelayTolerance());
+        barber.setWorkStartHour(dto.getWorkStartHour());
+        barber.setWorkEndHour(dto.getWorkEndHour());
+        barber.setBreakStartHour(dto.getBreakStartHour());
+        barber.setBreakEndHour(dto.getBreakEndHour());
 
+        return BarberMapper.toDto(barberRepository.save(barber));
+    }
+
+    @Override
+    public BarberResponseDTO toggleAvailability(Long id, Long requesterId) {
+        Barber barber = findBarber(id);
+        assertSelf(barber, requesterId);
+        barber.setAvailable(!barber.isAvailable());
         return BarberMapper.toDto(barberRepository.save(barber));
     }
 
@@ -39,6 +53,26 @@ public class BarberServiceImpl implements BarberService {
         Barber barber = findBarber(id);
         assertSelf(barber, requesterId);
         barberRepository.delete(barber);
+    }
+
+    private void validateWorkingHours(BarberPostPutDTO dto) {
+        if (dto.getWorkStartHour() >= dto.getWorkEndHour()) {
+            throw new BusinessRuleException(
+                    "O horário de abertura deve ser antes do horário de fechamento.");
+        }
+        Integer breakStart = dto.getBreakStartHour();
+        Integer breakEnd = dto.getBreakEndHour();
+        if ((breakStart == null) != (breakEnd == null)) {
+            throw new BusinessRuleException("O intervalo precisa de início e fim.");
+        }
+        if (breakStart != null) {
+            if (breakStart >= breakEnd
+                    || breakStart < dto.getWorkStartHour()
+                    || breakEnd > dto.getWorkEndHour()) {
+                throw new BusinessRuleException(
+                        "O intervalo deve estar dentro do horário de atendimento.");
+            }
+        }
     }
 
     private void assertSelf(Barber barber, Long requesterId) {

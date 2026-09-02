@@ -1,0 +1,5 @@
+ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE users ADD COLUMN verification_code VARCHAR(6);
+ALTER TABLE users ADD COLUMN verification_code_expires_at TIMESTAMP;
+
+ALTER TABLE users ALTER COLUMN email_verified SET DEFAULT FALSE;

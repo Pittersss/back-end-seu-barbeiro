@@ -26,11 +26,15 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
+	implementation("org.springframework.boot:spring-boot-starter-mail")
 	implementation("org.flywaydb:flyway-database-postgresql")
 
 	implementation("io.jsonwebtoken:jjwt-api:${property("jjwtVersion")}")
 	runtimeOnly("io.jsonwebtoken:jjwt-impl:${property("jjwtVersion")}")
 	runtimeOnly("io.jsonwebtoken:jjwt-jackson:${property("jjwtVersion")}")
+
+	implementation("com.google.zxing:core:3.5.3")
+	implementation("com.google.zxing:javase:3.5.3")
 
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")

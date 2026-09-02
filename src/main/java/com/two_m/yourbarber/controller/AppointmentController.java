@@ -3,8 +3,10 @@ package com.two_m.yourbarber.controller;
 import com.two_m.yourbarber.dto.appointment.AppointmentPostDTO;
 import com.two_m.yourbarber.dto.appointment.AppointmentResponseDTO;
 import com.two_m.yourbarber.dto.appointment.AppointmentStatusDTO;
+import com.two_m.yourbarber.dto.pix.PixQrCodeResponseDTO;
 import com.two_m.yourbarber.model.User;
 import com.two_m.yourbarber.service.AppointmentService;
+import com.two_m.yourbarber.service.pix.PixService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AppointmentController {
 
     private final AppointmentService appointmentService;
+    private final PixService pixService;
 
     @PostMapping
     public ResponseEntity<AppointmentResponseDTO> createAppointment(
@@ -56,5 +59,11 @@ public class AppointmentController {
             @PathVariable Long id, @AuthenticationPrincipal User currentUser) {
         appointmentService.cancelAppointment(id, currentUser.getId());
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/pix")
+    public ResponseEntity<PixQrCodeResponseDTO> getPixQrCode(
+            @PathVariable Long id, @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(pixService.generateQrCode(id, currentUser.getId()));
     }
 }

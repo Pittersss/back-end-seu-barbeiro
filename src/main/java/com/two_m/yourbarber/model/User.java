@@ -19,6 +19,7 @@ import jakarta.validation.constraints.Email;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -44,6 +45,12 @@ public class User implements UserDetails {
 
     private String name;
 
+    private String phone;
+
+    /** Base64 (data-URI-less) JPEG/PNG of the user's profile picture; downscaled client-side. */
+    @Column(columnDefinition = "text")
+    private String avatarBase64;
+
     @Email
     @Column(unique = true, nullable = false)
     private String email;
@@ -54,6 +61,15 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean emailVerified = false;
+
+    @Column(length = 6)
+    private String verificationCode;
+
+    private LocalDateTime verificationCodeExpiresAt;
 
     private LocalDateTime createdAt;
 
@@ -97,6 +113,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return emailVerified;
     }
 }

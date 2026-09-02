@@ -50,6 +50,8 @@ export default function AppLayout() {
       <Tabs.Screen name="shop/[id]" options={{ href: null }} />
       <Tabs.Screen name="book/[shopId]" options={{ href: null }} />
       <Tabs.Screen name="appointment/[id]/pix" options={{ href: null }} />
+      <Tabs.Screen name="availability" options={{ href: null }} />
+      <Tabs.Screen name="blocked-clients" options={{ href: null }} />
     </Tabs>
   );
 }

@@ -9,5 +9,7 @@ public interface BarberService {
 
     BarberResponseDTO updateBarber(Long id, BarberPostPutDTO dto, Long requesterId);
 
+    BarberResponseDTO toggleAvailability(Long id, Long requesterId);
+
     void deleteBarber(Long id, Long requesterId);
 }

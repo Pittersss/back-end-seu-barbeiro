@@ -38,6 +38,11 @@ public class BarberShopController {
                 .body(barberShopService.requestCreation(dto, currentUser.getId()));
     }
 
+    @GetMapping
+    public ResponseEntity<List<BarberShopResponseDTO>> listBarberShops() {
+        return ResponseEntity.ok(barberShopService.listBarberShops());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<BarberShopResponseDTO> getBarberShop(@PathVariable Long id) {
         return ResponseEntity.ok(barberShopService.getBarberShop(id));

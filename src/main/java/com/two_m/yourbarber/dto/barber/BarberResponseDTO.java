@@ -17,8 +17,13 @@ public class BarberResponseDTO {
     private String name;
     private String email;
     private String phone;
+    private String avatarBase64;
     private String pixKey;
     private boolean available;
     private int delayTolerance;
+    private int workStartHour;
+    private int workEndHour;
+    private Integer breakStartHour;
+    private Integer breakEndHour;
     private Long barberShopId;
 }

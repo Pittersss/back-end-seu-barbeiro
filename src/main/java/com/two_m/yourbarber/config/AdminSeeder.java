@@ -36,6 +36,7 @@ public class AdminSeeder implements CommandLineRunner {
                         .email(adminEmail)
                         .password(passwordEncoder.encode(adminPassword))
                         .role(UserRole.ADMIN)
+                        .emailVerified(true)
                         .build();
         userRepository.save(admin);
         log.info("Seeded default admin user: {}", adminEmail);

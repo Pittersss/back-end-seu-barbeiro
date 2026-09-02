@@ -18,8 +18,10 @@ import com.two_m.yourbarber.model.enums.PaymentMethod;
 import com.two_m.yourbarber.model.enums.UserRole;
 import com.two_m.yourbarber.repository.AppointmentRepository;
 import com.two_m.yourbarber.repository.BarberRepository;
+import com.two_m.yourbarber.repository.ClientBlockRepository;
 import com.two_m.yourbarber.repository.ClientRepository;
 import com.two_m.yourbarber.repository.ServiceRepository;
+import com.two_m.yourbarber.repository.TimeBlockRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,6 +39,8 @@ class AppointmentServiceImplTest {
     @Mock private ClientRepository clientRepository;
     @Mock private BarberRepository barberRepository;
     @Mock private ServiceRepository serviceRepository;
+    @Mock private TimeBlockRepository timeBlockRepository;
+    @Mock private ClientBlockRepository clientBlockRepository;
 
     @InjectMocks private AppointmentServiceImpl appointmentService;
 
@@ -60,6 +64,8 @@ class AppointmentServiceImplTest {
                         .password("x")
                         .role(UserRole.BARBER)
                         .available(available)
+                        .workStartHour(0)
+                        .workEndHour(24)
                         .barberShop(shop)
                         .build();
         barber.setId(id);
@@ -92,11 +98,15 @@ class AppointmentServiceImplTest {
         when(barberRepository.findById(2L)).thenReturn(Optional.of(barber));
         when(serviceRepository.findById(3L)).thenReturn(Optional.of(service));
         when(appointmentRepository.findByBarberId(2L)).thenReturn(List.of());
+        when(timeBlockRepository.findByBarberId(2L)).thenReturn(List.of());
         when(appointmentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         AppointmentPostDTO dto =
                 new AppointmentPostDTO(
-                        2L, 3L, LocalDateTime.now().plusDays(1), PaymentMethod.PIX);
+                        2L,
+                        3L,
+                        LocalDateTime.now().plusDays(1).withHour(10).withMinute(0),
+                        PaymentMethod.PIX);
         AppointmentResponseDTO result = appointmentService.createAppointment(dto, 1L);
 
         assertThat(result.getStatus()).isEqualTo(AppointmentStatus.PENDING);
@@ -146,9 +156,60 @@ class AppointmentServiceImplTest {
         when(barberRepository.findById(2L)).thenReturn(Optional.of(barber));
         when(serviceRepository.findById(3L)).thenReturn(Optional.of(service));
         when(appointmentRepository.findByBarberId(2L)).thenReturn(List.of(existing));
+        when(timeBlockRepository.findByBarberId(2L)).thenReturn(List.of());
 
         AppointmentPostDTO dto =
                 new AppointmentPostDTO(2L, 3L, scheduledAt.plusMinutes(10), PaymentMethod.PIX);
+
+        assertThrows(
+                BusinessRuleException.class,
+                () -> appointmentService.createAppointment(dto, 1L));
+    }
+
+    @Test
+    void createAppointment_clientBlockedByBarber_throwsForbidden() {
+        BarberShop shop = BarberShop.builder().name("Shop").build();
+        shop.setId(9L);
+        Client client = client(1L);
+        Barber barber = barber(2L, shop, true);
+        com.two_m.yourbarber.model.Service service = offering(3L, shop, true);
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(barberRepository.findById(2L)).thenReturn(Optional.of(barber));
+        when(serviceRepository.findById(3L)).thenReturn(Optional.of(service));
+        when(clientBlockRepository.existsByBarberIdAndClientId(2L, 1L)).thenReturn(true);
+
+        AppointmentPostDTO dto =
+                new AppointmentPostDTO(
+                        2L, 3L, LocalDateTime.now().plusDays(1), PaymentMethod.PIX);
+
+        assertThrows(
+                ForbiddenOperationException.class,
+                () -> appointmentService.createAppointment(dto, 1L));
+    }
+
+    @Test
+    void createAppointment_insideTimeBlock_throws() {
+        BarberShop shop = BarberShop.builder().name("Shop").build();
+        shop.setId(9L);
+        Client client = client(1L);
+        Barber barber = barber(2L, shop, true);
+        com.two_m.yourbarber.model.Service service = offering(3L, shop, true);
+
+        LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0);
+        com.two_m.yourbarber.model.TimeBlock block =
+                com.two_m.yourbarber.model.TimeBlock.builder()
+                        .barber(barber)
+                        .startsAt(start.minusHours(1))
+                        .endsAt(start.plusHours(1))
+                        .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(barberRepository.findById(2L)).thenReturn(Optional.of(barber));
+        when(serviceRepository.findById(3L)).thenReturn(Optional.of(service));
+        when(timeBlockRepository.findByBarberId(2L)).thenReturn(List.of(block));
+
+        AppointmentPostDTO dto = new AppointmentPostDTO(2L, 3L, start, PaymentMethod.PIX);
 
         assertThrows(
                 BusinessRuleException.class,

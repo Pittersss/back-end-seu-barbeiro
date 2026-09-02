@@ -39,6 +39,8 @@ class BarberServiceImplTest {
                         .pixKey("pix")
                         .available(true)
                         .delayTolerance(5)
+                        .workStartHour(9)
+                        .workEndHour(18)
                         .build();
         barber.setId(id);
         return barber;
@@ -68,13 +70,41 @@ class BarberServiceImplTest {
         when(barberRepository.findById(1L)).thenReturn(Optional.of(barber));
         when(barberRepository.save(any(Barber.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        BarberPostPutDTO dto = new BarberPostPutDTO("New Name", "222", "new-pix", 10);
+        BarberPostPutDTO dto =
+                new BarberPostPutDTO("New Name", "222", "new-pix", 10, 8, 20, null, null);
         BarberResponseDTO result = barberService.updateBarber(1L, dto, 1L);
 
         assertThat(result.getName()).isEqualTo("New Name");
         assertThat(result.getPhone()).isEqualTo("222");
         assertThat(result.getPixKey()).isEqualTo("new-pix");
         assertThat(result.getDelayTolerance()).isEqualTo(10);
+        assertThat(result.getWorkStartHour()).isEqualTo(8);
+        assertThat(result.getWorkEndHour()).isEqualTo(20);
+    }
+
+    @Test
+    void updateBarber_invalidWorkingHours_throws() {
+        Barber barber = barber(1L);
+        when(barberRepository.findById(1L)).thenReturn(Optional.of(barber));
+
+        BarberPostPutDTO dto =
+                new BarberPostPutDTO("John", "111", "pix", 0, 18, 9, null, null);
+
+        assertThrows(
+                com.two_m.yourbarber.exception.BusinessRuleException.class,
+                () -> barberService.updateBarber(1L, dto, 1L));
+        verify(barberRepository, never()).save(any());
+    }
+
+    @Test
+    void toggleAvailability_self_flips() {
+        Barber barber = barber(1L);
+        when(barberRepository.findById(1L)).thenReturn(Optional.of(barber));
+        when(barberRepository.save(any(Barber.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        BarberResponseDTO result = barberService.toggleAvailability(1L, 1L);
+
+        assertThat(result.isAvailable()).isFalse();
     }
 
     @Test
@@ -82,7 +112,8 @@ class BarberServiceImplTest {
         Barber barber = barber(1L);
         when(barberRepository.findById(1L)).thenReturn(Optional.of(barber));
 
-        BarberPostPutDTO dto = new BarberPostPutDTO("New Name", "222", "new-pix", 10);
+        BarberPostPutDTO dto =
+                new BarberPostPutDTO("New Name", "222", "new-pix", 10, 8, 20, null, null);
 
         assertThrows(
                 ForbiddenOperationException.class,
