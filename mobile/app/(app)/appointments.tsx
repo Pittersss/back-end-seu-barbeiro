@@ -66,9 +66,12 @@ export default function AppointmentsScreen() {
 
   async function handleAdvanceStatus(appointment: Appointment, status: Appointment['status']) {
     setActioningId(appointment.id);
+    setError(null);
     try {
       await updateAppointmentStatus(appointment.id, status);
       await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Não foi possível atualizar o agendamento.');
     } finally {
       setActioningId(null);
     }
@@ -147,6 +150,7 @@ export default function AppointmentsScreen() {
           const counterpart = isBarber ? item.clientName : item.barberName;
           const counterpartAvatar = isBarber ? item.clientAvatarBase64 : item.barberAvatarBase64;
           const canBlock = isBarber && !blockedIds.has(item.clientId);
+          const canComplete = isBarber && item.status === 'CONFIRMED' && new Date(item.scheduledAt) <= new Date();
           return (
             <Card style={styles.card}>
               <View style={styles.cardHeader}>
@@ -192,7 +196,7 @@ export default function AppointmentsScreen() {
                     <Text style={styles.linkAction}>Confirmar</Text>
                   </Pressable>
                 ) : null}
-                {isBarber && item.status === 'CONFIRMED' ? (
+                {canComplete ? (
                   <Pressable disabled={busy} onPress={() => handleAdvanceStatus(item, 'COMPLETED')}>
                     <Text style={styles.linkAction}>Concluir</Text>
                   </Pressable>
