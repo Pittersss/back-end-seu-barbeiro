@@ -10,6 +10,7 @@ import com.two_m.yourbarber.model.Barber;
 import com.two_m.yourbarber.model.TimeBlock;
 import com.two_m.yourbarber.repository.BarberRepository;
 import com.two_m.yourbarber.repository.TimeBlockRepository;
+import com.two_m.yourbarber.service.SubscriptionService;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +24,14 @@ public class TimeBlockServiceImpl implements TimeBlockService {
 
     private final TimeBlockRepository timeBlockRepository;
     private final BarberRepository barberRepository;
+    private final SubscriptionService subscriptionService;
 
     @Override
     public TimeBlockResponseDTO create(Long barberId, TimeBlockPostDTO dto, Long requesterId) {
         if (!barberId.equals(requesterId)) {
             throw new ForbiddenOperationException("You can only manage your own schedule");
         }
+        subscriptionService.assertActive(requesterId);
         if (!dto.getEndsAt().isAfter(dto.getStartsAt())) {
             throw new BusinessRuleException("O fim do bloqueio deve ser depois do início.");
         }
@@ -69,6 +72,7 @@ public class TimeBlockServiceImpl implements TimeBlockService {
         if (!barberId.equals(requesterId)) {
             throw new ForbiddenOperationException("You can only manage your own schedule");
         }
+        subscriptionService.assertActive(requesterId);
         TimeBlock block =
                 timeBlockRepository
                         .findById(blockId)

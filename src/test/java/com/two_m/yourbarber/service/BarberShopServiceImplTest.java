@@ -33,6 +33,7 @@ class BarberShopServiceImplTest {
     @Mock private BarberShopRepository barberShopRepository;
     @Mock private BarberShopRequestRepository barberShopRequestRepository;
     @Mock private BarberRepository barberRepository;
+    @Mock private SubscriptionService subscriptionService;
 
     @InjectMocks private BarberShopServiceImpl barberShopService;
 

@@ -23,10 +23,12 @@ public class ServiceServiceImpl implements ServiceService {
     private final ServiceRepository serviceRepository;
     private final BarberShopRepository barberShopRepository;
     private final BarberRepository barberRepository;
+    private final SubscriptionService subscriptionService;
 
     @Override
     public ServiceResponseDTO createService(
             Long shopId, ServicePostPutDTO dto, Long requesterId) {
+        subscriptionService.assertActive(requesterId);
         BarberShop shop = findShop(shopId);
         Barber requester = assertMember(shop, requesterId);
 
@@ -55,6 +57,7 @@ public class ServiceServiceImpl implements ServiceService {
     @Override
     public ServiceResponseDTO updateService(
             Long shopId, Long serviceId, ServicePostPutDTO dto, Long requesterId) {
+        subscriptionService.assertActive(requesterId);
         BarberShop shop = findShop(shopId);
         com.two_m.yourbarber.model.Service service = findServiceInShop(shop, serviceId);
         assertCanManage(shop, service, requesterId);
@@ -70,6 +73,7 @@ public class ServiceServiceImpl implements ServiceService {
 
     @Override
     public void deleteService(Long shopId, Long serviceId, Long requesterId) {
+        subscriptionService.assertActive(requesterId);
         BarberShop shop = findShop(shopId);
         com.two_m.yourbarber.model.Service service = findServiceInShop(shop, serviceId);
         assertCanManage(shop, service, requesterId);
@@ -79,6 +83,7 @@ public class ServiceServiceImpl implements ServiceService {
     @Override
     public ServiceResponseDTO toggleAvailability(
             Long shopId, Long serviceId, Long requesterId) {
+        subscriptionService.assertActive(requesterId);
         BarberShop shop = findShop(shopId);
         com.two_m.yourbarber.model.Service service = findServiceInShop(shop, serviceId);
         assertCanManage(shop, service, requesterId);

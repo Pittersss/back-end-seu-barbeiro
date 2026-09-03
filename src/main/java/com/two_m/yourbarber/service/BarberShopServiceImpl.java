@@ -29,6 +29,7 @@ public class BarberShopServiceImpl implements BarberShopService {
     private final BarberShopRepository barberShopRepository;
     private final BarberShopRequestRepository barberShopRequestRepository;
     private final BarberRepository barberRepository;
+    private final SubscriptionService subscriptionService;
 
     @Override
     public BarberShopRequestResponseDTO requestCreation(
@@ -62,6 +63,7 @@ public class BarberShopServiceImpl implements BarberShopService {
     @Override
     public BarberShopResponseDTO updateBarberShop(
             Long id, BarberShopPostPutDTO dto, Long requesterId) {
+        subscriptionService.assertActive(requesterId);
         BarberShop shop = findShop(id);
         assertOwner(shop, requesterId);
 
@@ -82,6 +84,7 @@ public class BarberShopServiceImpl implements BarberShopService {
 
     @Override
     public BarberShopResponseDTO toggleAcceptingBarbers(Long id, Long requesterId) {
+        subscriptionService.assertActive(requesterId);
         BarberShop shop = findShop(id);
         assertOwner(shop, requesterId);
         shop.setAcceptingBarbers(!shop.isAcceptingBarbers());

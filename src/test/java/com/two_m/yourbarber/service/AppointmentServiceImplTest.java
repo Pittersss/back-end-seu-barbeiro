@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.two_m.yourbarber.dto.appointment.AppointmentPostDTO;
 import com.two_m.yourbarber.dto.appointment.AppointmentResponseDTO;
+import com.two_m.yourbarber.dto.subscription.SubscriptionStatusDTO;
 import com.two_m.yourbarber.exception.BusinessRuleException;
 import com.two_m.yourbarber.exception.ForbiddenOperationException;
 import com.two_m.yourbarber.model.Appointment;
@@ -15,6 +16,7 @@ import com.two_m.yourbarber.model.BarberShop;
 import com.two_m.yourbarber.model.Client;
 import com.two_m.yourbarber.model.enums.AppointmentStatus;
 import com.two_m.yourbarber.model.enums.PaymentMethod;
+import com.two_m.yourbarber.model.enums.SubscriptionStatus;
 import com.two_m.yourbarber.model.enums.UserRole;
 import com.two_m.yourbarber.repository.AppointmentRepository;
 import com.two_m.yourbarber.repository.BarberRepository;
@@ -41,6 +43,7 @@ class AppointmentServiceImplTest {
     @Mock private ServiceRepository serviceRepository;
     @Mock private TimeBlockRepository timeBlockRepository;
     @Mock private ClientBlockRepository clientBlockRepository;
+    @Mock private SubscriptionService subscriptionService;
 
     @InjectMocks private AppointmentServiceImpl appointmentService;
 
@@ -72,6 +75,10 @@ class AppointmentServiceImplTest {
         return barber;
     }
 
+    private SubscriptionStatusDTO activeSubscription() {
+        return SubscriptionStatusDTO.builder().status(SubscriptionStatus.ACTIVE).build();
+    }
+
     private com.two_m.yourbarber.model.Service offering(
             long id, BarberShop shop, boolean available) {
         com.two_m.yourbarber.model.Service service =
@@ -97,6 +104,7 @@ class AppointmentServiceImplTest {
         when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
         when(barberRepository.findById(2L)).thenReturn(Optional.of(barber));
         when(serviceRepository.findById(3L)).thenReturn(Optional.of(service));
+        when(subscriptionService.getStatus(2L)).thenReturn(activeSubscription());
         when(appointmentRepository.findByBarberId(2L)).thenReturn(List.of());
         when(timeBlockRepository.findByBarberId(2L)).thenReturn(List.of());
         when(appointmentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -135,6 +143,29 @@ class AppointmentServiceImplTest {
     }
 
     @Test
+    void createAppointment_barberSubscriptionInactive_throws() {
+        BarberShop shop = BarberShop.builder().name("Shop").build();
+        shop.setId(9L);
+        Client client = client(1L);
+        Barber barber = barber(2L, shop, true);
+        com.two_m.yourbarber.model.Service service = offering(3L, shop, true);
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(barberRepository.findById(2L)).thenReturn(Optional.of(barber));
+        when(serviceRepository.findById(3L)).thenReturn(Optional.of(service));
+        when(subscriptionService.getStatus(2L))
+                .thenReturn(SubscriptionStatusDTO.builder().status(SubscriptionStatus.INACTIVE).build());
+
+        AppointmentPostDTO dto =
+                new AppointmentPostDTO(
+                        2L, 3L, LocalDateTime.now().plusDays(1), PaymentMethod.PIX);
+
+        assertThrows(
+                BusinessRuleException.class,
+                () -> appointmentService.createAppointment(dto, 1L));
+    }
+
+    @Test
     void createAppointment_serviceAssignedToOtherBarber_throws() {
         BarberShop shop = BarberShop.builder().name("Shop").build();
         shop.setId(9L);
@@ -147,6 +178,7 @@ class AppointmentServiceImplTest {
         when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
         when(barberRepository.findById(2L)).thenReturn(Optional.of(barber));
         when(serviceRepository.findById(3L)).thenReturn(Optional.of(service));
+        when(subscriptionService.getStatus(2L)).thenReturn(activeSubscription());
 
         AppointmentPostDTO dto =
                 new AppointmentPostDTO(
@@ -178,6 +210,7 @@ class AppointmentServiceImplTest {
         when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
         when(barberRepository.findById(2L)).thenReturn(Optional.of(barber));
         when(serviceRepository.findById(3L)).thenReturn(Optional.of(service));
+        when(subscriptionService.getStatus(2L)).thenReturn(activeSubscription());
         when(appointmentRepository.findByBarberId(2L)).thenReturn(List.of(existing));
         when(timeBlockRepository.findByBarberId(2L)).thenReturn(List.of());
 
@@ -200,6 +233,7 @@ class AppointmentServiceImplTest {
         when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
         when(barberRepository.findById(2L)).thenReturn(Optional.of(barber));
         when(serviceRepository.findById(3L)).thenReturn(Optional.of(service));
+        when(subscriptionService.getStatus(2L)).thenReturn(activeSubscription());
         when(clientBlockRepository.existsByBarberIdAndClientId(2L, 1L)).thenReturn(true);
 
         AppointmentPostDTO dto =
@@ -230,6 +264,7 @@ class AppointmentServiceImplTest {
         when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
         when(barberRepository.findById(2L)).thenReturn(Optional.of(barber));
         when(serviceRepository.findById(3L)).thenReturn(Optional.of(service));
+        when(subscriptionService.getStatus(2L)).thenReturn(activeSubscription());
         when(timeBlockRepository.findByBarberId(2L)).thenReturn(List.of(block));
 
         AppointmentPostDTO dto = new AppointmentPostDTO(2L, 3L, start, PaymentMethod.PIX);
@@ -294,6 +329,33 @@ class AppointmentServiceImplTest {
 
         assertThrows(
                 BusinessRuleException.class,
+                () -> appointmentService.updateStatus(7L, AppointmentStatus.COMPLETED, 2L));
+    }
+
+    @Test
+    void updateStatus_subscriptionInactive_throws() {
+        BarberShop shop = BarberShop.builder().name("Shop").build();
+        Client client = client(1L);
+        Barber barber = barber(2L, shop, true);
+        com.two_m.yourbarber.model.Service service = offering(3L, shop, true);
+        Appointment appointment =
+                Appointment.builder()
+                        .scheduledAt(LocalDateTime.now().minusHours(1))
+                        .status(AppointmentStatus.CONFIRMED)
+                        .client(client)
+                        .barber(barber)
+                        .service(service)
+                        .build();
+        appointment.setId(7L);
+
+        when(appointmentRepository.findById(7L)).thenReturn(Optional.of(appointment));
+        org.mockito.Mockito.doThrow(
+                        new com.two_m.yourbarber.exception.SubscriptionRequiredException("inactive"))
+                .when(subscriptionService)
+                .assertActive(2L);
+
+        assertThrows(
+                com.two_m.yourbarber.exception.SubscriptionRequiredException.class,
                 () -> appointmentService.updateStatus(7L, AppointmentStatus.COMPLETED, 2L));
     }
 

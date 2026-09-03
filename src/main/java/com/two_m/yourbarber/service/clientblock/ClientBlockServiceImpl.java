@@ -13,6 +13,7 @@ import com.two_m.yourbarber.model.ClientBlock;
 import com.two_m.yourbarber.repository.BarberRepository;
 import com.two_m.yourbarber.repository.ClientBlockRepository;
 import com.two_m.yourbarber.repository.ClientRepository;
+import com.two_m.yourbarber.service.SubscriptionService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,10 +27,12 @@ public class ClientBlockServiceImpl implements ClientBlockService {
     private final ClientBlockRepository clientBlockRepository;
     private final BarberRepository barberRepository;
     private final ClientRepository clientRepository;
+    private final SubscriptionService subscriptionService;
 
     @Override
     public ClientBlockResponseDTO block(Long barberId, ClientBlockPostDTO dto, Long requesterId) {
         assertSelf(barberId, requesterId);
+        subscriptionService.assertActive(requesterId);
         if (barberId.equals(dto.getClientId())) {
             throw new BusinessRuleException("You cannot block yourself");
         }
@@ -73,6 +76,7 @@ public class ClientBlockServiceImpl implements ClientBlockService {
     @Override
     public void unblock(Long barberId, Long clientId, Long requesterId) {
         assertSelf(barberId, requesterId);
+        subscriptionService.assertActive(requesterId);
         ClientBlock block =
                 clientBlockRepository
                         .findByBarberIdAndClientId(barberId, clientId)

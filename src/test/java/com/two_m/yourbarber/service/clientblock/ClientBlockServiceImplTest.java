@@ -19,6 +19,7 @@ import com.two_m.yourbarber.model.enums.UserRole;
 import com.two_m.yourbarber.repository.BarberRepository;
 import com.two_m.yourbarber.repository.ClientBlockRepository;
 import com.two_m.yourbarber.repository.ClientRepository;
+import com.two_m.yourbarber.service.SubscriptionService;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +33,7 @@ class ClientBlockServiceImplTest {
     @Mock private ClientBlockRepository clientBlockRepository;
     @Mock private BarberRepository barberRepository;
     @Mock private ClientRepository clientRepository;
+    @Mock private SubscriptionService subscriptionService;
 
     @InjectMocks private ClientBlockServiceImpl service;
 

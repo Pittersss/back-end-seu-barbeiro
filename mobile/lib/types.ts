@@ -202,6 +202,13 @@ export interface PixQrCodeResponse {
   qrCodeBase64: string;
 }
 
+export type SubscriptionStatus = 'ACTIVE' | 'PENDING_CONFIRMATION' | 'INACTIVE';
+
+export interface SubscriptionStatusResponse {
+  status: SubscriptionStatus;
+  periodEnd?: string | null;
+}
+
 export interface UserProfile {
   id: number;
   name: string;

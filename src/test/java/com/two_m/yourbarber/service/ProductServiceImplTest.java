@@ -30,6 +30,7 @@ class ProductServiceImplTest {
 
     @Mock private ProductRepository productRepository;
     @Mock private BarberShopRepository barberShopRepository;
+    @Mock private SubscriptionService subscriptionService;
 
     @InjectMocks private ProductServiceImpl productService;
 

@@ -19,7 +19,8 @@ import { Card } from './Card';
 import { useAuth } from '../context/AuthContext';
 import { getBarber } from '../lib/api/barbers';
 import { getBarberShop, toggleAcceptingBarbers } from '../lib/api/barbershops';
-import type { Barber, BarberShop } from '../lib/types';
+import { getSubscriptionStatus } from '../lib/api/subscriptions';
+import type { Barber, BarberShop, SubscriptionStatus } from '../lib/types';
 import { colors } from '../theme/colors';
 import { centeredPage } from '../theme/layout';
 import { spacing } from '../theme/spacing';
@@ -29,6 +30,7 @@ export function BarberHome() {
   const { session } = useAuth();
   const [barber, setBarber] = useState<Barber | null>(null);
   const [shop, setShop] = useState<BarberShop | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [togglingAccepting, setTogglingAccepting] = useState(false);
@@ -43,6 +45,7 @@ export function BarberHome() {
       } else {
         setShop(null);
       }
+      setSubscriptionStatus((await getSubscriptionStatus()).status);
     } catch {
       // A 401 here means the session was stale/invalid; AuthContext's
       // unauthorized handler already clears it and redirects to login.
@@ -91,6 +94,23 @@ export function BarberHome() {
             <Text style={styles.title}>{isOwner ? 'Minha barbearia' : 'Painel do barbeiro'}</Text>
           </View>
         </View>
+
+        {subscriptionStatus && subscriptionStatus !== 'ACTIVE' ? (
+          <Pressable onPress={() => router.push('/(app)/subscription')}>
+            <Card style={[styles.card, styles.subscriptionCard]}>
+              <Ionicons name="lock-closed-outline" size={20} color={colors.red} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardLabel}>Assinatura</Text>
+                <Text style={styles.cardValue}>
+                  {subscriptionStatus === 'PENDING_CONFIRMATION'
+                    ? 'Pagamento em análise — toque para ver detalhes.'
+                    : 'Assine para gerenciar serviços, produtos e agendamentos.'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textFaint} />
+            </Card>
+          </Pressable>
+        ) : null}
 
         {barber ? (
           <Pressable onPress={() => router.push('/(app)/availability')}>
@@ -182,6 +202,13 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: spacing.md,
+  },
+  subscriptionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderColor: colors.red,
+    borderWidth: 1,
   },
   statusRow: {
     flexDirection: 'row',

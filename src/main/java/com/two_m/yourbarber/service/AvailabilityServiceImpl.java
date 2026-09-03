@@ -5,6 +5,7 @@ import com.two_m.yourbarber.model.Appointment;
 import com.two_m.yourbarber.model.Barber;
 import com.two_m.yourbarber.model.TimeBlock;
 import com.two_m.yourbarber.model.enums.AppointmentStatus;
+import com.two_m.yourbarber.model.enums.SubscriptionStatus;
 import com.two_m.yourbarber.repository.AppointmentRepository;
 import com.two_m.yourbarber.repository.BarberRepository;
 import com.two_m.yourbarber.repository.ServiceRepository;
@@ -32,6 +33,7 @@ public class AvailabilityServiceImpl implements AvailabilityService {
     private final ServiceRepository serviceRepository;
     private final AppointmentRepository appointmentRepository;
     private final TimeBlockRepository timeBlockRepository;
+    private final SubscriptionService subscriptionService;
 
     @Override
     public Map<LocalDate, List<LocalDateTime>> openSlots(
@@ -53,6 +55,9 @@ public class AvailabilityServiceImpl implements AvailabilityService {
                                                 "Service not found: " + serviceId));
 
         if (service.getBarber() != null && !service.getBarber().getId().equals(barberId)) {
+            return new LinkedHashMap<>();
+        }
+        if (subscriptionService.getStatus(barberId).getStatus() != SubscriptionStatus.ACTIVE) {
             return new LinkedHashMap<>();
         }
 

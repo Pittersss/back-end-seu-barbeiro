@@ -8,6 +8,7 @@ import com.two_m.yourbarber.exception.ResourceNotFoundException;
 import com.two_m.yourbarber.mapper.BarberMapper;
 import com.two_m.yourbarber.model.Barber;
 import com.two_m.yourbarber.repository.BarberRepository;
+import com.two_m.yourbarber.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 public class BarberServiceImpl implements BarberService {
 
     private final BarberRepository barberRepository;
+    private final SubscriptionService subscriptionService;
 
     @Override
     public BarberResponseDTO getBarber(Long id) {
@@ -26,6 +28,7 @@ public class BarberServiceImpl implements BarberService {
     public BarberResponseDTO updateBarber(Long id, BarberPostPutDTO dto, Long requesterId) {
         Barber barber = findBarber(id);
         assertSelf(barber, requesterId);
+        subscriptionService.assertActive(requesterId);
         validateWorkingHours(dto);
 
         barber.setName(dto.getName());
@@ -44,6 +47,7 @@ public class BarberServiceImpl implements BarberService {
     public BarberResponseDTO toggleAvailability(Long id, Long requesterId) {
         Barber barber = findBarber(id);
         assertSelf(barber, requesterId);
+        subscriptionService.assertActive(requesterId);
         barber.setAvailable(!barber.isAvailable());
         return BarberMapper.toDto(barberRepository.save(barber));
     }

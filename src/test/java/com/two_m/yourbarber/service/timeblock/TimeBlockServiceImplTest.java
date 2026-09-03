@@ -16,6 +16,7 @@ import com.two_m.yourbarber.model.TimeBlock;
 import com.two_m.yourbarber.model.enums.UserRole;
 import com.two_m.yourbarber.repository.BarberRepository;
 import com.two_m.yourbarber.repository.TimeBlockRepository;
+import com.two_m.yourbarber.service.SubscriptionService;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,7 @@ class TimeBlockServiceImplTest {
 
     @Mock private TimeBlockRepository timeBlockRepository;
     @Mock private BarberRepository barberRepository;
+    @Mock private SubscriptionService subscriptionService;
 
     @InjectMocks private TimeBlockServiceImpl service;
 

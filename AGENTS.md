@@ -54,6 +54,18 @@ mobile/                 Expo Router app (TypeScript), see mobile/README.md
 - `dto/pix/` and `service/pix/` are Pix QR-code generation for appointment payments —
   present in the working tree as uncommitted changes I didn't author; treat as existing
   code, not something to redo.
+- Every barber (owner or team member) needs an **active subscription** (R$30/month,
+  paid via Pix to the developer's own personal key — `subscription.pix-key`) to use any
+  write endpoint on services/products/availability/blocked-clients/appointments/shop
+  settings, and clients can't book a barber whose subscription lapsed. `SubscriptionService.assertActive(barberId)`
+  is the one-line guard called at the top of each gated method (same pattern as
+  `assertOwner`); it throws `SubscriptionRequiredException` → HTTP 402. Status is
+  *computed live* from `SubscriptionPayment` history (`ACTIVE` / `PENDING_CONFIRMATION` /
+  `INACTIVE`) — there's no scheduled expiry job, and paying again does not stack, it
+  restarts a fresh 30-day window from confirmation. `GET/POST /api/subscriptions/me[/pix]`
+  are barber-facing; confirming a payment is another curl/Postman-only admin action
+  (`GET/PATCH /api/admin/subscription-payments[/{id}]`), exactly like barbershop-request
+  approval.
 
 ## Mobile conventions
 

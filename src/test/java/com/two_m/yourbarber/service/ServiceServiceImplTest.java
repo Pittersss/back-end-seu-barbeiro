@@ -31,6 +31,7 @@ class ServiceServiceImplTest {
     @Mock private ServiceRepository serviceRepository;
     @Mock private BarberShopRepository barberShopRepository;
     @Mock private BarberRepository barberRepository;
+    @Mock private SubscriptionService subscriptionService;
 
     @InjectMocks private ServiceServiceImpl serviceService;
 
@@ -82,6 +83,23 @@ class ServiceServiceImplTest {
                         .build();
         service.setId(id);
         return service;
+    }
+
+    @Test
+    void createService_subscriptionInactive_throws() {
+        Barber owner = owner(1L);
+        shop(5L, owner);
+        org.mockito.Mockito.doThrow(
+                        new com.two_m.yourbarber.exception.SubscriptionRequiredException("inactive"))
+                .when(subscriptionService)
+                .assertActive(1L);
+
+        ServicePostPutDTO dto =
+                new ServicePostPutDTO("Haircut", "desc", 30, BigDecimal.valueOf(50), null);
+
+        assertThrows(
+                com.two_m.yourbarber.exception.SubscriptionRequiredException.class,
+                () -> serviceService.createService(5L, dto, 1L));
     }
 
     @Test

@@ -115,11 +115,23 @@ screen when paying by Pix → "Meus Agendamentos" (view/cancel).
 (confirm/complete/cancel), profile edit (name/phone/Pix key), and — for owners — a shop
 card with an accepting-barbers toggle.
 
+**Barber subscription**: R$30/month per barber (owner or team member), paid via Pix
+straight to the developer's own personal Pix key (`SUBSCRIPTION_PIX_KEY` in `.env`) —
+no payment gateway involved. Without an active subscription, a barber can't manage
+services/products/availability/blocked-clients/appointments or shop settings, and
+clients can't book new appointments with them. `GET /api/subscriptions/me` shows the
+current status; `POST /api/subscriptions/me/pix` generates the R$30 Pix charge.
+Confirming a payment (once you see it land in your own bank account) is a manual admin
+action — see below.
+
 ## Known gaps (deliberate, not oversights)
 
 - Email confirmation is a UI-only mock; there's no verify-email endpoint yet.
-- No admin UI in the app — approving/rejecting a shop creation request means calling
-  `AdminController`'s endpoints directly (curl/Postman) with the admin JWT.
+- No admin UI in the app — approving/rejecting a shop creation request, or confirming a
+  subscription payment, means calling `AdminController`'s endpoints directly
+  (curl/Postman) with the admin JWT: `GET/PATCH /api/admin/barbershop-requests[/{id}]`
+  and `GET/PATCH /api/admin/subscription-payments[/{id}]` (`PATCH` body:
+  `{"approved": true}`).
 - No services/products CRUD or join-request management screens for shop owners yet.
 
 ## Testing

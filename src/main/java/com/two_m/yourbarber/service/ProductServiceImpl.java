@@ -19,10 +19,12 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final BarberShopRepository barberShopRepository;
+    private final SubscriptionService subscriptionService;
 
     @Override
     public ProductResponseDTO createProduct(
             Long shopId, ProductPostPutDTO dto, Long requesterId) {
+        subscriptionService.assertActive(requesterId);
         BarberShop shop = findShop(shopId);
         assertOwner(shop, requesterId);
 
@@ -49,6 +51,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponseDTO updateProduct(
             Long shopId, Long productId, ProductPostPutDTO dto, Long requesterId) {
+        subscriptionService.assertActive(requesterId);
         BarberShop shop = findShop(shopId);
         assertOwner(shop, requesterId);
         Product product = findProductInShop(shop, productId);
@@ -63,6 +66,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void deleteProduct(Long shopId, Long productId, Long requesterId) {
+        subscriptionService.assertActive(requesterId);
         BarberShop shop = findShop(shopId);
         assertOwner(shop, requesterId);
         Product product = findProductInShop(shop, productId);
@@ -72,6 +76,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponseDTO toggleAvailability(
             Long shopId, Long productId, Long requesterId) {
+        subscriptionService.assertActive(requesterId);
         BarberShop shop = findShop(shopId);
         assertOwner(shop, requesterId);
         Product product = findProductInShop(shop, productId);

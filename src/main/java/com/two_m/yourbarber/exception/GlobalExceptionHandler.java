@@ -36,6 +36,12 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    @ExceptionHandler(SubscriptionRequiredException.class)
+    public ResponseEntity<ErrorResponse> handleSubscriptionRequired(
+            SubscriptionRequiredException ex) {
+        return build(HttpStatus.PAYMENT_REQUIRED, ex.getMessage());
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
         return build(HttpStatus.UNAUTHORIZED, "Invalid email or password");

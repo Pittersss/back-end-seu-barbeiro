@@ -14,6 +14,7 @@ import com.two_m.yourbarber.exception.ResourceNotFoundException;
 import com.two_m.yourbarber.model.Barber;
 import com.two_m.yourbarber.model.enums.UserRole;
 import com.two_m.yourbarber.repository.BarberRepository;
+import com.two_m.yourbarber.service.SubscriptionService;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class BarberServiceImplTest {
 
     @Mock private BarberRepository barberRepository;
+    @Mock private SubscriptionService subscriptionService;
 
     @InjectMocks private BarberServiceImpl barberService;
 

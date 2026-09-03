@@ -54,6 +54,7 @@ export default function AppLayout() {
       <Tabs.Screen name="blocked-clients" options={{ href: null }} />
       <Tabs.Screen name="services" options={{ href: null }} />
       <Tabs.Screen name="products" options={{ href: null }} />
+      <Tabs.Screen name="subscription" options={{ href: null }} />
     </Tabs>
   );
 }

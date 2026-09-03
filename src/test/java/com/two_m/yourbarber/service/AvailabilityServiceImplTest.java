@@ -5,8 +5,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import com.two_m.yourbarber.dto.subscription.SubscriptionStatusDTO;
 import com.two_m.yourbarber.model.Barber;
 import com.two_m.yourbarber.model.TimeBlock;
+import com.two_m.yourbarber.model.enums.SubscriptionStatus;
 import com.two_m.yourbarber.model.enums.UserRole;
 import com.two_m.yourbarber.repository.AppointmentRepository;
 import com.two_m.yourbarber.repository.BarberRepository;
@@ -29,6 +31,7 @@ class AvailabilityServiceImplTest {
     @Mock private ServiceRepository serviceRepository;
     @Mock private AppointmentRepository appointmentRepository;
     @Mock private TimeBlockRepository timeBlockRepository;
+    @Mock private SubscriptionService subscriptionService;
 
     @InjectMocks private AvailabilityServiceImpl service;
 
@@ -70,9 +73,22 @@ class AvailabilityServiceImplTest {
     }
 
     @Test
+    void openSlots_barberSubscriptionInactive_returnsEmpty() {
+        when(barberRepository.findById(1L)).thenReturn(Optional.of(barber(9, 12, null, null)));
+        when(serviceRepository.findById(7L)).thenReturn(Optional.of(service(30)));
+        when(subscriptionService.getStatus(1L))
+                .thenReturn(SubscriptionStatusDTO.builder().status(SubscriptionStatus.INACTIVE).build());
+
+        LocalDate day = LocalDate.now().plusDays(3);
+        assertThat(service.openSlots(1L, 7L, day, day)).isEmpty();
+    }
+
+    @Test
     void openSlots_plainWindow_returnsEverySlotThatFits() {
         when(barberRepository.findById(1L)).thenReturn(Optional.of(barber(9, 12, null, null)));
         when(serviceRepository.findById(7L)).thenReturn(Optional.of(service(30)));
+        when(subscriptionService.getStatus(1L))
+                .thenReturn(SubscriptionStatusDTO.builder().status(SubscriptionStatus.ACTIVE).build());
         when(appointmentRepository.findByBarberIdAndScheduledAtBetween(eq(1L), any(), any()))
                 .thenReturn(List.of());
         when(timeBlockRepository.findByBarberId(1L)).thenReturn(List.of());
@@ -93,6 +109,8 @@ class AvailabilityServiceImplTest {
     void openSlots_withBreakAndBlock_excludesThem() {
         when(barberRepository.findById(1L)).thenReturn(Optional.of(barber(9, 13, 12, 13)));
         when(serviceRepository.findById(7L)).thenReturn(Optional.of(service(30)));
+        when(subscriptionService.getStatus(1L))
+                .thenReturn(SubscriptionStatusDTO.builder().status(SubscriptionStatus.ACTIVE).build());
         when(appointmentRepository.findByBarberIdAndScheduledAtBetween(eq(1L), any(), any()))
                 .thenReturn(List.of());
 

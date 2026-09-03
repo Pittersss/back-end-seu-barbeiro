@@ -10,6 +10,7 @@ import com.two_m.yourbarber.model.Appointment;
 import com.two_m.yourbarber.model.Barber;
 import com.two_m.yourbarber.model.Client;
 import com.two_m.yourbarber.model.enums.AppointmentStatus;
+import com.two_m.yourbarber.model.enums.SubscriptionStatus;
 import com.two_m.yourbarber.model.enums.UserRole;
 import com.two_m.yourbarber.repository.AppointmentRepository;
 import com.two_m.yourbarber.repository.BarberRepository;
@@ -34,6 +35,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final ServiceRepository serviceRepository;
     private final TimeBlockRepository timeBlockRepository;
     private final ClientBlockRepository clientBlockRepository;
+    private final SubscriptionService subscriptionService;
 
     @Override
     public AppointmentResponseDTO createAppointment(AppointmentPostDTO dto, Long clientId) {
@@ -42,6 +44,9 @@ public class AppointmentServiceImpl implements AppointmentService {
         com.two_m.yourbarber.model.Service service = findService(dto.getServiceId());
 
         if (!barber.isAvailable()) {
+            throw new BusinessRuleException("Barber is not currently available");
+        }
+        if (subscriptionService.getStatus(barber.getId()).getStatus() != SubscriptionStatus.ACTIVE) {
             throw new BusinessRuleException("Barber is not currently available");
         }
         if (!service.isAvailable()) {
@@ -105,6 +110,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw new ForbiddenOperationException(
                     "Only the assigned barber can update this appointment's status");
         }
+        subscriptionService.assertActive(requesterId);
         if (status == AppointmentStatus.COMPLETED
                 && appointment.getScheduledAt().isAfter(LocalDateTime.now())) {
             throw new BusinessRuleException(

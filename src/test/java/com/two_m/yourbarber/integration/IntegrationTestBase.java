@@ -86,6 +86,7 @@ abstract class IntegrationTestBase {
         jdbc.update("DELETE FROM services");
         jdbc.update("DELETE FROM join_requests");
         jdbc.update("DELETE FROM barbershop_requests");
+        jdbc.update("DELETE FROM subscription_payments");
         jdbc.update("UPDATE users SET barber_shop_id = NULL");
         jdbc.update("DELETE FROM barber_shops");
         jdbc.update("DELETE FROM users WHERE role <> 'ADMIN'");
@@ -178,7 +179,21 @@ abstract class IntegrationTestBase {
         return register("/api/auth/register/client", "client");
     }
 
+    /**
+     * Registers a barber and immediately activates their subscription (see
+     * {@link #activateSubscription(long)}) -- every existing test fixture predates the
+     * subscription feature and only cares about its own concern (booking rules, ownership,
+     * cancellation, ...), not this gate. Tests for the subscription feature itself should use
+     * {@link #registerUnsubscribedBarber()} instead.
+     */
     protected Actor registerBarber() throws Exception {
+        Actor barber = register("/api/auth/register/barber", "barber");
+        activateSubscription(barber.id());
+        return barber;
+    }
+
+    /** Like {@link #registerBarber()} but leaves the subscription inactive, for testing the gate itself. */
+    protected Actor registerUnsubscribedBarber() throws Exception {
         return register("/api/auth/register/barber", "barber");
     }
 
@@ -201,6 +216,16 @@ abstract class IntegrationTestBase {
                                 Map.of("email", email, "password", "password123"),
                                 200));
         return new Actor(id, email, loggedIn.get("token").asText());
+    }
+
+    /** Directly inserts a CONFIRMED subscription payment good for 30 days, bypassing Pix/admin. */
+    protected void activateSubscription(long barberId) {
+        jdbc.update(
+                "INSERT INTO subscription_payments (barber_id, status, amount, period_start,"
+                        + " period_end, confirmed_at) VALUES (?, 'CONFIRMED', 30.00, ?, ?, now())",
+                barberId,
+                java.time.LocalDate.now(),
+                java.time.LocalDate.now().plusDays(30));
     }
 
     /**
