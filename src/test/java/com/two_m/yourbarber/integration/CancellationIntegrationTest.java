@@ -75,6 +75,7 @@ class CancellationIntegrationTest extends IntegrationTestBase {
                 b.owner().token(),
                 Map.of("status", "CONFIRMED"),
                 200);
+        backdateAppointment(b.appointmentId());
         patch(
                 "/api/appointments/" + b.appointmentId() + "/status",
                 b.owner().token(),

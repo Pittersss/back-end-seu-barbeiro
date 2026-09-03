@@ -35,11 +35,9 @@ public class PixServiceImpl implements PixService {
     public PixQrCodeResponseDTO generateQrCode(Long appointmentId, Long requesterId) {
         Appointment appointment = findAppointment(appointmentId);
 
-        boolean isParticipant =
-                appointment.getClient().getId().equals(requesterId)
-                        || appointment.getBarber().getId().equals(requesterId);
-        if (!isParticipant) {
-            throw new ForbiddenOperationException("You are not part of this appointment");
+        if (!appointment.getClient().getId().equals(requesterId)) {
+            throw new ForbiddenOperationException(
+                    "Only the client can view this appointment's payment code");
         }
         if (appointment.getPaymentMethod() != PaymentMethod.PIX) {
             throw new BusinessRuleException("This appointment is not set up for Pix payment");

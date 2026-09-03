@@ -277,4 +277,17 @@ abstract class IntegrationTestBase {
                 "scheduledAt", when.toString(),
                 "paymentMethod", "CASH");
     }
+
+    /**
+     * Moves an appointment's scheduled time into the past, bypassing the booking flow. A barber
+     * can only mark an appointment COMPLETED once its scheduled time has passed, so tests that
+     * only care about post-completion behavior (not that rule itself) need this to complete a
+     * freshly-booked (necessarily future) appointment.
+     */
+    protected void backdateAppointment(long appointmentId) {
+        jdbc.update(
+                "UPDATE appointments SET scheduled_at = ? WHERE id = ?",
+                LocalDateTime.now().minusHours(1),
+                appointmentId);
+    }
 }

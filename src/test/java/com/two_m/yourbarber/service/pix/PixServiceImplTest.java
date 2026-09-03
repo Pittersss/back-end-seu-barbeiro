@@ -119,7 +119,7 @@ class PixServiceImplTest {
     }
 
     @Test
-    void generateQrCode_barberIsAlsoAllowed_returnsPayload() {
+    void generateQrCode_barber_throwsForbidden() {
         Client client = client(1L);
         Barber barber = barber(2L, "barbeiro@example.com");
         com.two_m.yourbarber.model.Service service = offering(3L, new BigDecimal("45.00"));
@@ -134,9 +134,8 @@ class PixServiceImplTest {
 
         when(appointmentRepository.findById(7L)).thenReturn(Optional.of(appointment));
 
-        PixQrCodeResponseDTO result = pixService.generateQrCode(7L, 2L);
-
-        assertThat(result.getPixCopyPaste()).isNotBlank();
+        assertThrows(
+                ForbiddenOperationException.class, () -> pixService.generateQrCode(7L, 2L));
     }
 
     @Test

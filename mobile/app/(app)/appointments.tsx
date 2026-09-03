@@ -174,7 +174,7 @@ export default function AppointmentsScreen() {
               </View>
 
               <View style={styles.actionsRow}>
-                {item.paymentMethod === 'PIX' && item.status !== 'CANCELLED' ? (
+                {!isBarber && item.paymentMethod === 'PIX' && item.status !== 'CANCELLED' ? (
                   <Pressable
                     onPress={() =>
                       router.push({

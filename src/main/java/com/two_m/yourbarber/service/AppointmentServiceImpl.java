@@ -105,6 +105,11 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw new ForbiddenOperationException(
                     "Only the assigned barber can update this appointment's status");
         }
+        if (status == AppointmentStatus.COMPLETED
+                && appointment.getScheduledAt().isAfter(LocalDateTime.now())) {
+            throw new BusinessRuleException(
+                    "Não é possível concluir um agendamento antes da data/horário marcado.");
+        }
         appointment.setStatus(status);
         return AppointmentMapper.toDto(appointmentRepository.save(appointment));
     }

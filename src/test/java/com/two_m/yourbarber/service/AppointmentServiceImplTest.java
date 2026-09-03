@@ -257,8 +257,8 @@ class AppointmentServiceImplTest {
         com.two_m.yourbarber.model.Service service = offering(3L, shop, true);
         Appointment appointment =
                 Appointment.builder()
-                        .scheduledAt(LocalDateTime.now().plusDays(1))
-                        .status(AppointmentStatus.PENDING)
+                        .scheduledAt(LocalDateTime.now().minusHours(1))
+                        .status(AppointmentStatus.CONFIRMED)
                         .client(client)
                         .barber(barber)
                         .service(service)
@@ -272,6 +272,29 @@ class AppointmentServiceImplTest {
                 appointmentService.updateStatus(7L, AppointmentStatus.COMPLETED, 2L);
 
         assertThat(result.getStatus()).isEqualTo(AppointmentStatus.COMPLETED);
+    }
+
+    @Test
+    void updateStatus_completeBeforeScheduledTime_throwsBusinessRule() {
+        BarberShop shop = BarberShop.builder().name("Shop").build();
+        Client client = client(1L);
+        Barber barber = barber(2L, shop, true);
+        com.two_m.yourbarber.model.Service service = offering(3L, shop, true);
+        Appointment appointment =
+                Appointment.builder()
+                        .scheduledAt(LocalDateTime.now().plusDays(1))
+                        .status(AppointmentStatus.CONFIRMED)
+                        .client(client)
+                        .barber(barber)
+                        .service(service)
+                        .build();
+        appointment.setId(7L);
+
+        when(appointmentRepository.findById(7L)).thenReturn(Optional.of(appointment));
+
+        assertThrows(
+                BusinessRuleException.class,
+                () -> appointmentService.updateStatus(7L, AppointmentStatus.COMPLETED, 2L));
     }
 
     @Test
