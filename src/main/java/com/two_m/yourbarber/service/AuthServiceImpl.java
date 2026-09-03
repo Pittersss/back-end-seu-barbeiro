@@ -41,7 +41,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponseDTO registerClient(RegisterClientDTO dto) {
-        assertEmailAvailable(dto.getEmail());
+        freeUpEmailIfAbandoned(dto.getEmail());
 
         Client client =
                 Client.builder()
@@ -61,7 +61,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponseDTO registerBarber(RegisterBarberDTO dto) {
-        assertEmailAvailable(dto.getEmail());
+        freeUpEmailIfAbandoned(dto.getEmail());
 
         Barber barber =
                 Barber.builder()
@@ -146,10 +146,24 @@ public class AuthServiceImpl implements AuthService {
         user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(codeExpirationMinutes));
     }
 
-    private void assertEmailAvailable(String email) {
-        if (userRepository.existsByEmail(email)) {
-            throw new DuplicateResourceException("Email already registered: " + email);
-        }
+    /**
+     * A never-verified registration left an email "taken" with no way to ever log in or
+     * re-register it -- resend-code is the only way forward, and if mail was never configured
+     * correctly, that path is a dead end too. Treat an unverified account as an abandoned
+     * signup attempt and free up its email for a fresh one; only a verified account actually
+     * blocks re-registration.
+     */
+    private void freeUpEmailIfAbandoned(String email) {
+        userRepository
+                .findByEmail(email)
+                .ifPresent(
+                        existing -> {
+                            if (existing.isEmailVerified()) {
+                                throw new DuplicateResourceException(
+                                        "Email already registered: " + email);
+                            }
+                            userRepository.delete(existing);
+                        });
     }
 
     private AuthResponseDTO buildAuthResponse(User user) {

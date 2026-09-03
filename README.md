@@ -75,11 +75,11 @@ succeeds but the confirmation email will fail to send (visible in the backend lo
 and `POST /api/auth/resend-code` can retry once mail is configured.
 
 Copy `.env.example` to `.env` and fill in real values (a Gmail **App password**, not
-your normal password, if using Gmail — see the comments in the file). `docker compose`
-picks up `.env` automatically; for `./gradlew bootRun` load it into your shell first:
+your normal password, if using Gmail — see the comments in the file). Both `docker
+compose` and `./gradlew bootRun` pick up `.env` automatically (see
+`spring.config.import` in `application.properties`) — just edit `.env` and (re)start:
 
 ```sh
-export $(grep -v '^#' .env | xargs)
 ./gradlew bootRun
 ```
 

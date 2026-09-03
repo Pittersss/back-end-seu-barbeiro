@@ -56,7 +56,7 @@ class AuthServiceImplTest {
     void registerClient_savesClientAndReturnsToken() {
         RegisterClientDTO dto =
                 new RegisterClientDTO("Jane", "jane@example.com", "password123", "1234");
-        when(userRepository.existsByEmail(dto.getEmail())).thenReturn(false);
+        when(userRepository.findByEmail(dto.getEmail())).thenReturn(Optional.empty());
         when(passwordEncoder.encode(dto.getPassword())).thenReturn("encoded");
         when(jwtTokenProvider.generateToken(any(User.class))).thenReturn("token123");
         when(userRepository.save(any(User.class)))
@@ -77,14 +77,53 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void registerClient_duplicateEmail_throwsAndDoesNotSave() {
+    void registerClient_verifiedDuplicateEmail_throwsAndDoesNotSave() {
         RegisterClientDTO dto =
                 new RegisterClientDTO("Jane", "jane@example.com", "password123", "1234");
-        when(userRepository.existsByEmail(dto.getEmail())).thenReturn(true);
+        Client existing =
+                Client.builder()
+                        .name("Jane")
+                        .email(dto.getEmail())
+                        .password("encoded")
+                        .role(UserRole.CLIENT)
+                        .emailVerified(true)
+                        .build();
+        when(userRepository.findByEmail(dto.getEmail())).thenReturn(Optional.of(existing));
 
         assertThrows(
                 DuplicateResourceException.class, () -> authService.registerClient(dto));
         verify(userRepository, never()).save(any());
+        verify(userRepository, never()).delete(any());
+    }
+
+    @Test
+    void registerClient_abandonedUnverifiedEmail_deletesAndReregisters() {
+        RegisterClientDTO dto =
+                new RegisterClientDTO("Jane", "jane@example.com", "password123", "1234");
+        Client abandoned =
+                Client.builder()
+                        .name("Jane")
+                        .email(dto.getEmail())
+                        .password("old-encoded")
+                        .role(UserRole.CLIENT)
+                        .emailVerified(false)
+                        .build();
+        when(userRepository.findByEmail(dto.getEmail())).thenReturn(Optional.of(abandoned));
+        when(passwordEncoder.encode(dto.getPassword())).thenReturn("encoded");
+        when(jwtTokenProvider.generateToken(any(User.class))).thenReturn("token123");
+        when(userRepository.save(any(User.class)))
+                .thenAnswer(
+                        invocation -> {
+                            User u = invocation.getArgument(0);
+                            u.setId(1L);
+                            return u;
+                        });
+
+        AuthResponseDTO response = authService.registerClient(dto);
+
+        assertThat(response.getToken()).isEqualTo("token123");
+        verify(userRepository).delete(abandoned);
+        verify(userRepository).save(any(User.class));
     }
 
     @Test
@@ -92,7 +131,7 @@ class AuthServiceImplTest {
         RegisterBarberDTO dto =
                 new RegisterBarberDTO(
                         "John", "john@example.com", "password123", "999", "pix-key");
-        when(userRepository.existsByEmail(dto.getEmail())).thenReturn(false);
+        when(userRepository.findByEmail(dto.getEmail())).thenReturn(Optional.empty());
         when(passwordEncoder.encode(dto.getPassword())).thenReturn("encoded");
         when(jwtTokenProvider.generateToken(any(User.class))).thenReturn("token456");
         when(userRepository.save(any(User.class)))
@@ -110,11 +149,19 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void registerBarber_duplicateEmail_throws() {
+    void registerBarber_verifiedDuplicateEmail_throws() {
         RegisterBarberDTO dto =
                 new RegisterBarberDTO(
                         "John", "john@example.com", "password123", "999", "pix-key");
-        when(userRepository.existsByEmail(dto.getEmail())).thenReturn(true);
+        Client existing =
+                Client.builder()
+                        .name("John")
+                        .email(dto.getEmail())
+                        .password("encoded")
+                        .role(UserRole.CLIENT)
+                        .emailVerified(true)
+                        .build();
+        when(userRepository.findByEmail(dto.getEmail())).thenReturn(Optional.of(existing));
 
         assertThrows(
                 DuplicateResourceException.class, () -> authService.registerBarber(dto));
