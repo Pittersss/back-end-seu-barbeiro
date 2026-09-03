@@ -145,6 +145,7 @@ export default function AppointmentsScreen() {
           const busy = actioningId === item.id;
           const canCancel = item.status === 'PENDING' || item.status === 'CONFIRMED';
           const counterpart = isBarber ? item.clientName : item.barberName;
+          const counterpartAvatar = isBarber ? item.clientAvatarBase64 : item.barberAvatarBase64;
           const canBlock = isBarber && !blockedIds.has(item.clientId);
           return (
             <Card style={styles.card}>
@@ -160,7 +161,7 @@ export default function AppointmentsScreen() {
                 </Text>
               </View>
               <View style={styles.metaRow}>
-                <Avatar name={counterpart} size={22} />
+                <Avatar name={counterpart} avatarBase64={counterpartAvatar} size={22} />
                 <Text style={styles.meta}>
                   {isBarber ? 'Cliente' : 'Barbeiro'}: {counterpart}
                 </Text>

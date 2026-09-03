@@ -66,9 +66,13 @@ export function ClientHome() {
             onPress={() => router.push({ pathname: '/(app)/shop/[id]', params: { id: String(item.id) } })}
           >
             <Card style={styles.card}>
-              <View style={styles.cardIcon}>
-                <Ionicons name="cut" size={20} color={colors.blue} />
-              </View>
+              {item.photoBase64 ? (
+                <Avatar avatarBase64={item.photoBase64} name={item.name} size={44} style={styles.cardIcon} />
+              ) : (
+                <View style={styles.cardIcon}>
+                  <Ionicons name="cut" size={20} color={colors.blue} />
+                </View>
+              )}
               <View style={styles.cardBody}>
                 <Text style={styles.cardTitle}>{item.name}</Text>
                 {item.address ? <Text style={styles.cardSubtitle}>{item.address}</Text> : null}

@@ -15,8 +15,10 @@ public final class AppointmentMapper {
                 .paymentMethod(appointment.getPaymentMethod())
                 .clientId(appointment.getClient().getId())
                 .clientName(appointment.getClient().getName())
+                .clientAvatarBase64(appointment.getClient().getAvatarBase64())
                 .barberId(appointment.getBarber().getId())
                 .barberName(appointment.getBarber().getName())
+                .barberAvatarBase64(appointment.getBarber().getAvatarBase64())
                 .serviceId(appointment.getService().getId())
                 .serviceName(appointment.getService().getName())
                 .build();

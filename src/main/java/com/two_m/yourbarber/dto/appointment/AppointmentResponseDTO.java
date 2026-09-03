@@ -22,8 +22,10 @@ public class AppointmentResponseDTO {
     private PaymentMethod paymentMethod;
     private Long clientId;
     private String clientName;
+    private String clientAvatarBase64;
     private Long barberId;
     private String barberName;
+    private String barberAvatarBase64;
     private Long serviceId;
     private String serviceName;
 }

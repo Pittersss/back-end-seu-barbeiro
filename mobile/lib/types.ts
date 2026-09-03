@@ -176,8 +176,10 @@ export interface Appointment {
   paymentMethod: PaymentMethod;
   clientId: number;
   clientName: string;
+  clientAvatarBase64?: string | null;
   barberId: number;
   barberName: string;
+  barberAvatarBase64?: string | null;
   serviceId: number;
   serviceName: string;
 }
