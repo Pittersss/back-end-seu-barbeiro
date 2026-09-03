@@ -56,6 +56,20 @@ class AvailabilityServiceImplTest {
     }
 
     @Test
+    void openSlots_serviceAssignedToOtherBarber_returnsEmpty() {
+        Barber otherBarber = barber(9, 12, null, null);
+        otherBarber.setId(2L);
+        com.two_m.yourbarber.model.Service assignedService = service(30);
+        assignedService.setBarber(otherBarber);
+
+        when(barberRepository.findById(1L)).thenReturn(Optional.of(barber(9, 12, null, null)));
+        when(serviceRepository.findById(7L)).thenReturn(Optional.of(assignedService));
+
+        LocalDate day = LocalDate.now().plusDays(3);
+        assertThat(service.openSlots(1L, 7L, day, day)).isEmpty();
+    }
+
+    @Test
     void openSlots_plainWindow_returnsEverySlotThatFits() {
         when(barberRepository.findById(1L)).thenReturn(Optional.of(barber(9, 12, null, null)));
         when(serviceRepository.findById(7L)).thenReturn(Optional.of(service(30)));

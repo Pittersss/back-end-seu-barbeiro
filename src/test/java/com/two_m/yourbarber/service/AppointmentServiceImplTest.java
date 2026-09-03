@@ -135,6 +135,29 @@ class AppointmentServiceImplTest {
     }
 
     @Test
+    void createAppointment_serviceAssignedToOtherBarber_throws() {
+        BarberShop shop = BarberShop.builder().name("Shop").build();
+        shop.setId(9L);
+        Client client = client(1L);
+        Barber barber = barber(2L, shop, true);
+        Barber otherBarber = barber(4L, shop, true);
+        com.two_m.yourbarber.model.Service service = offering(3L, shop, true);
+        service.setBarber(otherBarber);
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(barberRepository.findById(2L)).thenReturn(Optional.of(barber));
+        when(serviceRepository.findById(3L)).thenReturn(Optional.of(service));
+
+        AppointmentPostDTO dto =
+                new AppointmentPostDTO(
+                        2L, 3L, LocalDateTime.now().plusDays(1), PaymentMethod.PIX);
+
+        assertThrows(
+                BusinessRuleException.class,
+                () -> appointmentService.createAppointment(dto, 1L));
+    }
+
+    @Test
     void createAppointment_conflictingTime_throws() {
         BarberShop shop = BarberShop.builder().name("Shop").build();
         shop.setId(9L);

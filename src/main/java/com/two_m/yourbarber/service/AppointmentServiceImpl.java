@@ -52,6 +52,9 @@ public class AppointmentServiceImpl implements AppointmentService {
                 || !barber.getBarberShop().getId().equals(service.getBarberShop().getId())) {
             throw new BusinessRuleException("Barber does not offer this service");
         }
+        if (service.getBarber() != null && !service.getBarber().getId().equals(barber.getId())) {
+            throw new BusinessRuleException("Barber does not offer this service");
+        }
         if (clientBlockRepository.existsByBarberIdAndClientId(barber.getId(), client.getId())) {
             throw new ForbiddenOperationException(
                     "Você não pode agendar com este barbeiro no momento.");

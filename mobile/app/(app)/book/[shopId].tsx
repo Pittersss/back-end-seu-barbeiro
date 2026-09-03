@@ -111,6 +111,25 @@ export default function BookingScreen() {
     };
   }, [service, barber]);
 
+  const visibleServices = useMemo(
+    () => (barber ? services.filter((s) => s.barberId == null || s.barberId === barber.id) : services),
+    [services, barber],
+  );
+
+  function handleSelectService(item: Service) {
+    setService(item);
+    setBarber((current) =>
+      current && item.barberId != null && current.id !== item.barberId ? null : current,
+    );
+  }
+
+  function handleSelectBarber(item: Barber) {
+    setBarber(item);
+    setService((current) =>
+      current && current.barberId != null && current.barberId !== item.id ? null : current,
+    );
+  }
+
   const canSubmit = Boolean(
     service && barber && scheduledAt && isKnownSlot(slotsByDate, scheduledAt),
   );
@@ -167,27 +186,31 @@ export default function BookingScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <SectionHeader title="Serviço" style={styles.firstSection} />
-        {services.map((item) => {
-          const selected = service?.id === item.id;
-          return (
-            <Pressable key={item.id} onPress={() => setService(item)}>
-              <Card style={[styles.optionCard, selected && styles.optionCardSelected]} variant="flat">
-                <View style={styles.serviceInfo}>
-                  <Text style={styles.optionTitle}>{item.name}</Text>
-                  <Text style={styles.optionMeta}>{formatDuration(item.durationMinutes)}</Text>
-                </View>
-                <Text style={styles.optionPrice}>{formatCurrency(item.price)}</Text>
-              </Card>
-            </Pressable>
-          );
-        })}
+        {barber && visibleServices.length === 0 ? (
+          <Text style={styles.hint}>{barber.name} não tem serviços cadastrados.</Text>
+        ) : (
+          visibleServices.map((item) => {
+            const selected = service?.id === item.id;
+            return (
+              <Pressable key={item.id} onPress={() => handleSelectService(item)}>
+                <Card style={[styles.optionCard, selected && styles.optionCardSelected]} variant="flat">
+                  <View style={styles.serviceInfo}>
+                    <Text style={styles.optionTitle}>{item.name}</Text>
+                    <Text style={styles.optionMeta}>{formatDuration(item.durationMinutes)}</Text>
+                  </View>
+                  <Text style={styles.optionPrice}>{formatCurrency(item.price)}</Text>
+                </Card>
+              </Pressable>
+            );
+          })
+        )}
 
         <SectionHeader title="Barbeiro" />
         <View style={styles.barbersRow}>
           {barbers.map((item) => {
             const selected = barber?.id === item.id;
             return (
-              <Pressable key={item.id} style={styles.barberChip} onPress={() => setBarber(item)}>
+              <Pressable key={item.id} style={styles.barberChip} onPress={() => handleSelectBarber(item)}>
                 <Avatar
                   name={item.name}
                   avatarBase64={item.avatarBase64}

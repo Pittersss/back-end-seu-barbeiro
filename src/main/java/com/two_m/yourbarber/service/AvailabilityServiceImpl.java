@@ -52,6 +52,10 @@ public class AvailabilityServiceImpl implements AvailabilityService {
                                         new ResourceNotFoundException(
                                                 "Service not found: " + serviceId));
 
+        if (service.getBarber() != null && !service.getBarber().getId().equals(barberId)) {
+            return new LinkedHashMap<>();
+        }
+
         int duration =
                 service.getDurationMinutes() != null && service.getDurationMinutes() > 0
                         ? service.getDurationMinutes()
