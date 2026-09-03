@@ -49,6 +49,10 @@ public class Service {
     @JoinColumn(name = "barber_shop_id")
     private BarberShop barberShop;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "barber_id")
+    private Barber barber;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

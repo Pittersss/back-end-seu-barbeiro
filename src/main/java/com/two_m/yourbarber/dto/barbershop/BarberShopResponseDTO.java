@@ -17,6 +17,7 @@ public class BarberShopResponseDTO {
     private String name;
     private String address;
     private String phone;
+    private String photoBase64;
     private boolean acceptingBarbers;
     private Long ownerId;
     private String ownerName;

@@ -15,6 +15,7 @@ public final class BarberShopMapper {
                 .name(shop.getName())
                 .address(shop.getAddress())
                 .phone(shop.getPhone())
+                .photoBase64(shop.getPhotoBase64())
                 .acceptingBarbers(shop.isAcceptingBarbers())
                 .ownerId(shop.getOwner() != null ? shop.getOwner().getId() : null)
                 .ownerName(shop.getOwner() != null ? shop.getOwner().getName() : null)

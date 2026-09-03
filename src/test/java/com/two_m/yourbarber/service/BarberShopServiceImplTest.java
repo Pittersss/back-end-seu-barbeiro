@@ -133,10 +133,23 @@ class BarberShopServiceImplTest {
         when(barberShopRepository.findById(5L)).thenReturn(Optional.of(shop));
         when(barberShopRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        BarberShopPostPutDTO dto = new BarberShopPostPutDTO("Renamed", "New Addr", "222");
+        BarberShopPostPutDTO dto = new BarberShopPostPutDTO("Renamed", "New Addr", "222", null);
         BarberShopResponseDTO result = barberShopService.updateBarberShop(5L, dto, 1L);
 
         assertThat(result.getName()).isEqualTo("Renamed");
+    }
+
+    @Test
+    void updateBarberShop_owner_updatesPhoto() {
+        Barber owner = barber(1L);
+        BarberShop shop = shop(5L, owner);
+        when(barberShopRepository.findById(5L)).thenReturn(Optional.of(shop));
+        when(barberShopRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        BarberShopPostPutDTO dto = new BarberShopPostPutDTO("Shop", null, null, "base64photo");
+        BarberShopResponseDTO result = barberShopService.updateBarberShop(5L, dto, 1L);
+
+        assertThat(result.getPhotoBase64()).isEqualTo("base64photo");
     }
 
     @Test
@@ -145,7 +158,7 @@ class BarberShopServiceImplTest {
         BarberShop shop = shop(5L, owner);
         when(barberShopRepository.findById(5L)).thenReturn(Optional.of(shop));
 
-        BarberShopPostPutDTO dto = new BarberShopPostPutDTO("Renamed", "New Addr", "222");
+        BarberShopPostPutDTO dto = new BarberShopPostPutDTO("Renamed", "New Addr", "222", null);
 
         assertThrows(
                 ForbiddenOperationException.class,

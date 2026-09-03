@@ -5,25 +5,30 @@ import com.two_m.yourbarber.dto.service.ServiceResponseDTO;
 import com.two_m.yourbarber.exception.ForbiddenOperationException;
 import com.two_m.yourbarber.exception.ResourceNotFoundException;
 import com.two_m.yourbarber.mapper.ServiceMapper;
+import com.two_m.yourbarber.model.Barber;
 import com.two_m.yourbarber.model.BarberShop;
+import com.two_m.yourbarber.repository.BarberRepository;
 import com.two_m.yourbarber.repository.BarberShopRepository;
 import com.two_m.yourbarber.repository.ServiceRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ServiceServiceImpl implements ServiceService {
 
     private final ServiceRepository serviceRepository;
     private final BarberShopRepository barberShopRepository;
+    private final BarberRepository barberRepository;
 
     @Override
     public ServiceResponseDTO createService(
             Long shopId, ServicePostPutDTO dto, Long requesterId) {
         BarberShop shop = findShop(shopId);
-        assertOwner(shop, requesterId);
+        Barber requester = assertMember(shop, requesterId);
 
         com.two_m.yourbarber.model.Service service =
                 com.two_m.yourbarber.model.Service.builder()
@@ -33,6 +38,7 @@ public class ServiceServiceImpl implements ServiceService {
                         .price(dto.getPrice())
                         .image(dto.getImage())
                         .barberShop(shop)
+                        .barber(requester)
                         .build();
 
         return ServiceMapper.toDto(serviceRepository.save(service));
@@ -50,8 +56,8 @@ public class ServiceServiceImpl implements ServiceService {
     public ServiceResponseDTO updateService(
             Long shopId, Long serviceId, ServicePostPutDTO dto, Long requesterId) {
         BarberShop shop = findShop(shopId);
-        assertOwner(shop, requesterId);
         com.two_m.yourbarber.model.Service service = findServiceInShop(shop, serviceId);
+        assertCanManage(shop, service, requesterId);
 
         service.setName(dto.getName());
         service.setDescription(dto.getDescription());
@@ -65,8 +71,8 @@ public class ServiceServiceImpl implements ServiceService {
     @Override
     public void deleteService(Long shopId, Long serviceId, Long requesterId) {
         BarberShop shop = findShop(shopId);
-        assertOwner(shop, requesterId);
         com.two_m.yourbarber.model.Service service = findServiceInShop(shop, serviceId);
+        assertCanManage(shop, service, requesterId);
         serviceRepository.delete(service);
     }
 
@@ -74,8 +80,8 @@ public class ServiceServiceImpl implements ServiceService {
     public ServiceResponseDTO toggleAvailability(
             Long shopId, Long serviceId, Long requesterId) {
         BarberShop shop = findShop(shopId);
-        assertOwner(shop, requesterId);
         com.two_m.yourbarber.model.Service service = findServiceInShop(shop, serviceId);
+        assertCanManage(shop, service, requesterId);
 
         service.setAvailable(!service.isAvailable());
         return ServiceMapper.toDto(serviceRepository.save(service));
@@ -98,9 +104,30 @@ public class ServiceServiceImpl implements ServiceService {
         return service;
     }
 
-    private void assertOwner(BarberShop shop, Long requesterId) {
-        if (shop.getOwner() == null || !shop.getOwner().getId().equals(requesterId)) {
-            throw new ForbiddenOperationException("Only the shop owner can perform this action");
+    private Barber assertMember(BarberShop shop, Long requesterId) {
+        Barber barber =
+                barberRepository
+                        .findById(requesterId)
+                        .orElseThrow(
+                                () ->
+                                        new ForbiddenOperationException(
+                                                "Only barbers can perform this action"));
+        if (barber.getBarberShop() == null
+                || !barber.getBarberShop().getId().equals(shop.getId())) {
+            throw new ForbiddenOperationException(
+                    "Only barbers of this shop can perform this action");
+        }
+        return barber;
+    }
+
+    private void assertCanManage(
+            BarberShop shop, com.two_m.yourbarber.model.Service service, Long requesterId) {
+        boolean isOwner = shop.getOwner() != null && shop.getOwner().getId().equals(requesterId);
+        boolean isAssignedBarber =
+                service.getBarber() != null && service.getBarber().getId().equals(requesterId);
+        if (!isOwner && !isAssignedBarber) {
+            throw new ForbiddenOperationException(
+                    "Only the shop owner or the assigned barber can perform this action");
         }
     }
 

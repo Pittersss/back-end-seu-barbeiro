@@ -68,6 +68,7 @@ public class BarberShopServiceImpl implements BarberShopService {
         shop.setName(dto.getName());
         shop.setAddress(dto.getAddress());
         shop.setPhone(dto.getPhone());
+        shop.setPhotoBase64(dto.getPhotoBase64());
 
         return BarberShopMapper.toDto(barberShopRepository.save(shop));
     }

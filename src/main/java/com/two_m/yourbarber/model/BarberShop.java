@@ -41,6 +41,8 @@ public class BarberShop {
 
     private String phone;
 
+    private String photoBase64;
+
     @Builder.Default
     private boolean acceptingBarbers = true;
 

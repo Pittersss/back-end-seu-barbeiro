@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
@@ -14,8 +14,9 @@ interface HourRangePickerProps {
 }
 
 /**
- * Horizontal strip of hour chips. Tap once for "opens at", tap a later hour for
- * "closes at"; the span in between fills in. Works identically on web and native.
+ * A wrapping grid of hour chips (no horizontal scroll — every hour is visible on
+ * web and native). Tap once for "opens at", tap a later hour for "closes at";
+ * the span in between fills in.
  */
 export function HourRangePicker({ from, to, min = 6, max = 23, onChange }: HourRangePickerProps) {
   const [pendingStart, setPendingStart] = useState<number | null>(null);
@@ -36,7 +37,7 @@ export function HourRangePicker({ from, to, min = 6, max = 23, onChange }: HourR
 
   return (
     <View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
+      <View style={styles.grid}>
         {hours.map((hour) => {
           const inRange = from != null && to != null && hour >= from && hour <= to;
           const isPending = pendingStart === hour;
@@ -52,7 +53,7 @@ export function HourRangePicker({ from, to, min = 6, max = 23, onChange }: HourR
             </Pressable>
           );
         })}
-      </ScrollView>
+      </View>
       <Text style={styles.caption}>
         {pendingStart != null
           ? `Abre às ${String(pendingStart).padStart(2, '0')}h — toque no horário de fechamento`
@@ -65,12 +66,14 @@ export function HourRangePicker({ from, to, min = 6, max = 23, onChange }: HourR
 }
 
 const styles = StyleSheet.create({
-  strip: {
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.xs,
     paddingVertical: spacing.xs,
   },
   chip: {
-    minWidth: 44,
+    minWidth: 46,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.sm,

@@ -18,6 +18,8 @@ public final class ServiceMapper {
                         service.getBarberShop() != null
                                 ? service.getBarberShop().getId()
                                 : null)
+                .barberId(service.getBarber() != null ? service.getBarber().getId() : null)
+                .barberName(service.getBarber() != null ? service.getBarber().getName() : null)
                 .build();
     }
 }

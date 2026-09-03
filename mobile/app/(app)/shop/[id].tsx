@@ -8,6 +8,7 @@ import { Avatar } from '../../../components/Avatar';
 import { Button } from '../../../components/Button';
 import { Card } from '../../../components/Card';
 import { SectionHeader } from '../../../components/SectionHeader';
+import { ApiError } from '../../../lib/api';
 import { getBarberShop, listShopBarbers } from '../../../lib/api/barbershops';
 import { listServices } from '../../../lib/api/services';
 import { formatCurrency, formatDuration } from '../../../lib/format';
@@ -25,22 +26,33 @@ export default function ShopDetailScreen() {
   const [services, setServices] = useState<Service[]>([]);
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
       (async () => {
         setLoading(true);
-        const [shopData, servicesData, barbersData] = await Promise.all([
-          getBarberShop(shopId),
-          listServices(shopId),
-          listShopBarbers(shopId),
-        ]);
-        if (!cancelled) {
-          setShop(shopData);
-          setServices(servicesData.filter((s) => s.available));
-          setBarbers(barbersData.filter((b) => b.available));
-          setLoading(false);
+        setError(null);
+        try {
+          const [shopData, servicesData, barbersData] = await Promise.all([
+            getBarberShop(shopId),
+            listServices(shopId),
+            listShopBarbers(shopId),
+          ]);
+          if (!cancelled) {
+            setShop(shopData);
+            setServices(servicesData.filter((s) => s.available));
+            setBarbers(barbersData.filter((b) => b.available));
+          }
+        } catch (err) {
+          if (!cancelled) {
+            setError(err instanceof ApiError ? err.message : 'Não foi possível carregar a barbearia.');
+          }
+        } finally {
+          if (!cancelled) {
+            setLoading(false);
+          }
         }
       })();
       return () => {
@@ -49,10 +61,25 @@ export default function ShopDetailScreen() {
     }, [shopId]),
   );
 
-  if (loading || !shop) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
         <ActivityIndicator style={styles.loading} color={colors.black} />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !shop) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.topBar}>
+          <Pressable onPress={() => router.back()} hitSlop={12}>
+            <Ionicons name="chevron-back" size={24} color={colors.black} />
+          </Pressable>
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.empty}>{error ?? 'Barbearia não encontrada.'}</Text>
+        </View>
       </SafeAreaView>
     );
   }
@@ -69,9 +96,13 @@ export default function ShopDetailScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.hero}>
-          <View style={styles.heroCrest}>
-            <Ionicons name="cut" size={22} color={colors.blue} />
-          </View>
+          {shop.photoBase64 ? (
+            <Avatar avatarBase64={shop.photoBase64} name={shop.name} size={52} />
+          ) : (
+            <View style={styles.heroCrest}>
+              <Ionicons name="cut" size={22} color={colors.blue} />
+            </View>
+          )}
           <Text style={styles.shopName}>{shop.name}</Text>
           {shop.address ? (
             <Text style={styles.shopMeta}>

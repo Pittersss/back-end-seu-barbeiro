@@ -36,6 +36,7 @@ export default function ProfileScreen() {
   const [shop, setShop] = useState<BarberShop | null>(null);
   const [loading, setLoading] = useState(true);
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const [shopPhotoBusy, setShopPhotoBusy] = useState(false);
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -172,6 +173,7 @@ export default function ProfileScreen() {
         name: shopName,
         address: shopAddress || undefined,
         phone: shopPhone || undefined,
+        photoBase64: shop.photoBase64 ?? undefined,
       });
       setShop(updated);
       flashSaved('Barbearia salva');
@@ -179,6 +181,28 @@ export default function ProfileScreen() {
       setError(err instanceof ApiError ? err.message : 'Não foi possível salvar.');
     } finally {
       setSavingShop(false);
+    }
+  }
+
+  async function handleChangeShopPhoto() {
+    if (!shop) return;
+    setError(null);
+    setShopPhotoBusy(true);
+    try {
+      const base64 = await pickAvatarBase64();
+      if (!base64) return;
+      const updated = await updateBarberShop(shop.id, {
+        name: shopName || shop.name,
+        address: shopAddress || undefined,
+        phone: shopPhone || undefined,
+        photoBase64: base64,
+      });
+      setShop(updated);
+      flashSaved('Foto da barbearia atualizada');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Não foi possível atualizar a foto.');
+    } finally {
+      setShopPhotoBusy(false);
     }
   }
 
@@ -277,6 +301,19 @@ export default function ProfileScreen() {
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={colors.textFaint} />
               </Pressable>
+              {shop ? (
+                <>
+                  <View style={styles.navDivider} />
+                  <Pressable style={styles.navRow} onPress={() => router.push('/(app)/services')}>
+                    <Ionicons name="cut-outline" size={20} color={colors.black} />
+                    <View style={styles.navText}>
+                      <Text style={styles.navTitle}>Meus serviços</Text>
+                      <Text style={styles.navHint}>Cadastre e edite os serviços que você oferece</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textFaint} />
+                  </Pressable>
+                </>
+              ) : null}
             </Card>
           </>
         ) : null}
@@ -285,6 +322,20 @@ export default function ProfileScreen() {
           <>
             <SectionHeader title="Minha barbearia" />
             <Card>
+              <Pressable
+                onPress={handleChangeShopPhoto}
+                disabled={shopPhotoBusy}
+                style={styles.shopPhotoWrap}
+              >
+                <Avatar name={shop?.name} avatarBase64={shop?.photoBase64} size={72} tone="black" />
+                <View style={styles.avatarBadge}>
+                  {shopPhotoBusy ? (
+                    <ActivityIndicator size="small" color={colors.white} />
+                  ) : (
+                    <Ionicons name="camera" size={15} color={colors.white} />
+                  )}
+                </View>
+              </Pressable>
               <Input label="Nome da barbearia" value={shopName} onChangeText={setShopName} />
               <Input label="Endereço" value={shopAddress} onChangeText={setShopAddress} />
               <Input
@@ -294,6 +345,17 @@ export default function ProfileScreen() {
                 onChangeText={setShopPhone}
               />
               <Button title="Salvar" size="sm" onPress={handleSaveShop} loading={savingShop} />
+            </Card>
+
+            <Card padded={false}>
+              <Pressable style={styles.navRow} onPress={() => router.push('/(app)/products')}>
+                <Ionicons name="pricetag-outline" size={20} color={colors.black} />
+                <View style={styles.navText}>
+                  <Text style={styles.navTitle}>Produtos</Text>
+                  <Text style={styles.navHint}>Itens vendidos na sua barbearia</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textFaint} />
+              </Pressable>
             </Card>
           </>
         ) : null}
@@ -327,6 +389,10 @@ const styles = StyleSheet.create({
   },
   avatarWrap: {
     marginBottom: spacing.sm,
+  },
+  shopPhotoWrap: {
+    alignSelf: 'center',
+    marginBottom: spacing.md,
   },
   avatarBadge: {
     position: 'absolute',

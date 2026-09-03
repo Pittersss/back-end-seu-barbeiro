@@ -47,6 +47,7 @@ export interface BarberShop {
   name: string;
   address?: string;
   phone?: string;
+  photoBase64?: string | null;
   acceptingBarbers: boolean;
   ownerId?: number;
   ownerName?: string;
@@ -56,6 +57,7 @@ export interface BarberShopPostPut {
   name: string;
   address?: string;
   phone?: string;
+  photoBase64?: string | null;
 }
 
 export interface BarberShopRequestPayload {
@@ -141,6 +143,30 @@ export interface Service {
   price: number;
   available: boolean;
   barberShopId: number;
+  barberId?: number | null;
+  barberName?: string | null;
+}
+
+export interface ServicePostPut {
+  name: string;
+  description?: string;
+  durationMinutes: number;
+  price: number;
+}
+
+export interface Product {
+  id: number;
+  name: string;
+  description?: string;
+  price: number;
+  available: boolean;
+  barberShopId: number;
+}
+
+export interface ProductPostPut {
+  name: string;
+  description?: string;
+  price: number;
 }
 
 export interface Appointment {

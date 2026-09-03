@@ -21,4 +21,6 @@ public class ServiceResponseDTO {
     private BigDecimal price;
     private boolean available;
     private Long barberShopId;
+    private Long barberId;
+    private String barberName;
 }
