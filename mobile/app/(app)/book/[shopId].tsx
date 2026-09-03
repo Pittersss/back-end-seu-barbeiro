@@ -116,6 +116,14 @@ export default function BookingScreen() {
     [services, barber],
   );
 
+  // A service either belongs to one specific barber or (barberId == null) is
+  // shared by the whole team, so this is a single O(n) pass over barbers —
+  // no per-barber lookups or extra requests.
+  const visibleBarbers = useMemo(
+    () => (service?.barberId != null ? barbers.filter((b) => b.id === service.barberId) : barbers),
+    [barbers, service],
+  );
+
   function handleSelectService(item: Service) {
     setService(item);
     setBarber((current) =>
@@ -207,7 +215,7 @@ export default function BookingScreen() {
 
         <SectionHeader title="Barbeiro" />
         <View style={styles.barbersRow}>
-          {barbers.map((item) => {
+          {visibleBarbers.map((item) => {
             const selected = barber?.id === item.id;
             return (
               <Pressable key={item.id} style={styles.barberChip} onPress={() => handleSelectBarber(item)}>
