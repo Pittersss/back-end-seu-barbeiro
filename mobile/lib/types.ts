@@ -223,3 +223,32 @@ export interface UpdateProfilePayload {
   phone?: string | null;
   avatarBase64?: string | null;
 }
+
+export type NotificationType =
+  | 'APPOINTMENT_REQUESTED'
+  | 'APPOINTMENT_CONFIRMED'
+  | 'APPOINTMENT_CANCELLED';
+
+export interface NotificationItem {
+  id: number;
+  type: NotificationType;
+  message: string;
+  appointmentId: number | null;
+  read: boolean;
+  createdAt: string;
+}
+
+export type PushPlatform = 'WEB' | 'IOS' | 'ANDROID';
+
+export interface PushSubscriptionPayload {
+  platform: PushPlatform;
+  endpoint?: string;
+  p256dh?: string;
+  authKey?: string;
+  expoPushToken?: string;
+}
+
+export interface PushUnsubscribePayload {
+  endpoint?: string;
+  expoPushToken?: string;
+}

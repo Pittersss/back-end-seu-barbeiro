@@ -36,6 +36,11 @@ dependencies {
 	implementation("com.google.zxing:core:3.5.3")
 	implementation("com.google.zxing:javase:3.5.3")
 
+	implementation("nl.martijndwars:web-push:5.1.2")
+	implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
+	implementation("org.apache.httpcomponents:httpasyncclient:4.1.5")
+	implementation("org.bitbucket.b_c:jose4j:0.9.6")
+
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")
 

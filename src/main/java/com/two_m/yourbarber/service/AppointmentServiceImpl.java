@@ -10,6 +10,7 @@ import com.two_m.yourbarber.model.Appointment;
 import com.two_m.yourbarber.model.Barber;
 import com.two_m.yourbarber.model.Client;
 import com.two_m.yourbarber.model.enums.AppointmentStatus;
+import com.two_m.yourbarber.model.enums.NotificationType;
 import com.two_m.yourbarber.model.enums.SubscriptionStatus;
 import com.two_m.yourbarber.model.enums.UserRole;
 import com.two_m.yourbarber.repository.AppointmentRepository;
@@ -36,6 +37,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final TimeBlockRepository timeBlockRepository;
     private final ClientBlockRepository clientBlockRepository;
     private final SubscriptionService subscriptionService;
+    private final NotificationService notificationService;
 
     @Override
     public AppointmentResponseDTO createAppointment(AppointmentPostDTO dto, Long clientId) {
@@ -88,7 +90,13 @@ public class AppointmentServiceImpl implements AppointmentService {
                         .service(service)
                         .build();
 
-        return AppointmentMapper.toDto(appointmentRepository.save(appointment));
+        Appointment saved = appointmentRepository.save(appointment);
+        notificationService.notify(
+                barber.getId(),
+                NotificationType.APPOINTMENT_REQUESTED,
+                client.getName() + " solicitou um horário em " + start.toLocalDate() + ".",
+                saved);
+        return AppointmentMapper.toDto(saved);
     }
 
     @Override
@@ -117,7 +125,15 @@ public class AppointmentServiceImpl implements AppointmentService {
                     "Não é possível concluir um agendamento antes da data/horário marcado.");
         }
         appointment.setStatus(status);
-        return AppointmentMapper.toDto(appointmentRepository.save(appointment));
+        Appointment saved = appointmentRepository.save(appointment);
+        if (status == AppointmentStatus.CONFIRMED) {
+            notificationService.notify(
+                    appointment.getClient().getId(),
+                    NotificationType.APPOINTMENT_CONFIRMED,
+                    "Seu agendamento com " + appointment.getBarber().getName() + " foi confirmado.",
+                    saved);
+        }
+        return AppointmentMapper.toDto(saved);
     }
 
     @Override
@@ -134,7 +150,24 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw new BusinessRuleException("Este agendamento não pode mais ser cancelado.");
         }
         appointment.setStatus(AppointmentStatus.CANCELLED);
-        appointmentRepository.save(appointment);
+        Appointment saved = appointmentRepository.save(appointment);
+
+        boolean cancelledByBarber = appointment.getBarber().getId().equals(requesterId);
+        if (cancelledByBarber) {
+            notificationService.notify(
+                    appointment.getClient().getId(),
+                    NotificationType.APPOINTMENT_CANCELLED,
+                    "Seu agendamento com "
+                            + appointment.getBarber().getName()
+                            + " foi recusado/cancelado.",
+                    saved);
+        } else {
+            notificationService.notify(
+                    appointment.getBarber().getId(),
+                    NotificationType.APPOINTMENT_CANCELLED,
+                    appointment.getClient().getName() + " cancelou o agendamento.",
+                    saved);
+        }
     }
 
     private int durationOf(com.two_m.yourbarber.model.Service service) {

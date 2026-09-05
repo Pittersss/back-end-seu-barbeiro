@@ -8,7 +8,9 @@ import { Avatar } from '../../components/Avatar';
 import { StatusBadge } from '../../components/Badge';
 import { Card } from '../../components/Card';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { NotificationBell } from '../../components/NotificationBell';
 import { useAuth } from '../../context/AuthContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { ApiError } from '../../lib/api';
 import { cancelAppointment, listAppointments, updateAppointmentStatus } from '../../lib/api/appointments';
 import { blockClient, listBlockedClients } from '../../lib/api/barbers';
@@ -27,6 +29,7 @@ const PAYMENT_LABELS: Record<string, string> = { PIX: 'Pix', CARD: 'Cartão', CA
 
 export default function AppointmentsScreen() {
   const { session } = useAuth();
+  const { refresh: refreshNotifications } = useNotifications();
   const isBarber = session?.role === 'BARBER';
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -61,7 +64,8 @@ export default function AppointmentsScreen() {
   useFocusEffect(
     useCallback(() => {
       load();
-    }, [load]),
+      refreshNotifications();
+    }, [load, refreshNotifications]),
   );
 
   async function handleAdvanceStatus(appointment: Appointment, status: Appointment['status']) {
@@ -105,7 +109,10 @@ export default function AppointmentsScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Meus agendamentos</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>Meus agendamentos</Text>
+          <NotificationBell />
+        </View>
         <View style={styles.segment}>
           {(['upcoming', 'history'] as Filter[]).map((key) => (
             <Pressable
@@ -247,6 +254,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
     ...centeredPage,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   title: {
     ...typography.h1,

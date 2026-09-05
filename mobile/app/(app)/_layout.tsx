@@ -1,12 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
 
 import { useAuth } from '../../context/AuthContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 
 export default function AppLayout() {
   const { session, isLoading } = useAuth();
+  const { unreadCount } = useNotifications();
 
   if (isLoading) {
     return null;
@@ -37,7 +40,12 @@ export default function AppLayout() {
         name="appointments"
         options={{
           title: 'Agendamentos',
-          tabBarIcon: ({ color, size }) => <Ionicons name="calendar" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => (
+            <View>
+              <Ionicons name="calendar" color={color} size={size} />
+              {unreadCount > 0 ? <View style={styles.tabDot} /> : null}
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
@@ -58,3 +66,15 @@ export default function AppLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabDot: {
+    position: 'absolute',
+    top: -2,
+    right: -6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.danger,
+  },
+});

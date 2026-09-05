@@ -80,6 +80,8 @@ abstract class IntegrationTestBase {
         // Ordered DELETEs rather than TRUNCATE CASCADE: every domain table
         // FK-references `users`, and `users` FK-references `barber_shops`, so a
         // cascading truncate would also wipe the seeded admin.
+        jdbc.update("DELETE FROM notifications");
+        jdbc.update("DELETE FROM push_subscriptions");
         jdbc.update("DELETE FROM appointments");
         jdbc.update("DELETE FROM time_blocks");
         jdbc.update("DELETE FROM client_blocks");

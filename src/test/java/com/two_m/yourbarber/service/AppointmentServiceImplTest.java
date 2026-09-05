@@ -3,6 +3,9 @@ package com.two_m.yourbarber.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.two_m.yourbarber.dto.appointment.AppointmentPostDTO;
@@ -15,6 +18,7 @@ import com.two_m.yourbarber.model.Barber;
 import com.two_m.yourbarber.model.BarberShop;
 import com.two_m.yourbarber.model.Client;
 import com.two_m.yourbarber.model.enums.AppointmentStatus;
+import com.two_m.yourbarber.model.enums.NotificationType;
 import com.two_m.yourbarber.model.enums.PaymentMethod;
 import com.two_m.yourbarber.model.enums.SubscriptionStatus;
 import com.two_m.yourbarber.model.enums.UserRole;
@@ -44,6 +48,7 @@ class AppointmentServiceImplTest {
     @Mock private TimeBlockRepository timeBlockRepository;
     @Mock private ClientBlockRepository clientBlockRepository;
     @Mock private SubscriptionService subscriptionService;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks private AppointmentServiceImpl appointmentService;
 
@@ -119,6 +124,8 @@ class AppointmentServiceImplTest {
 
         assertThat(result.getStatus()).isEqualTo(AppointmentStatus.PENDING);
         assertThat(result.getBarberId()).isEqualTo(2L);
+        verify(notificationService)
+                .notify(eq(2L), eq(NotificationType.APPOINTMENT_REQUESTED), any(), any());
     }
 
     @Test
@@ -307,6 +314,32 @@ class AppointmentServiceImplTest {
                 appointmentService.updateStatus(7L, AppointmentStatus.COMPLETED, 2L);
 
         assertThat(result.getStatus()).isEqualTo(AppointmentStatus.COMPLETED);
+        verify(notificationService, never()).notify(any(), any(), any(), any());
+    }
+
+    @Test
+    void updateStatus_toConfirmed_notifiesClient() {
+        BarberShop shop = BarberShop.builder().name("Shop").build();
+        Client client = client(1L);
+        Barber barber = barber(2L, shop, true);
+        com.two_m.yourbarber.model.Service service = offering(3L, shop, true);
+        Appointment appointment =
+                Appointment.builder()
+                        .scheduledAt(LocalDateTime.now().plusDays(1))
+                        .status(AppointmentStatus.PENDING)
+                        .client(client)
+                        .barber(barber)
+                        .service(service)
+                        .build();
+        appointment.setId(7L);
+
+        when(appointmentRepository.findById(7L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        appointmentService.updateStatus(7L, AppointmentStatus.CONFIRMED, 2L);
+
+        verify(notificationService)
+                .notify(eq(1L), eq(NotificationType.APPOINTMENT_CONFIRMED), any(), any());
     }
 
     @Test
@@ -404,6 +437,33 @@ class AppointmentServiceImplTest {
         appointmentService.cancelAppointment(7L, 1L);
 
         assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.CANCELLED);
+        verify(notificationService)
+                .notify(eq(2L), eq(NotificationType.APPOINTMENT_CANCELLED), any(), any());
+    }
+
+    @Test
+    void cancelAppointment_barber_notifiesClient() {
+        BarberShop shop = BarberShop.builder().name("Shop").build();
+        Client client = client(1L);
+        Barber barber = barber(2L, shop, true);
+        com.two_m.yourbarber.model.Service service = offering(3L, shop, true);
+        Appointment appointment =
+                Appointment.builder()
+                        .scheduledAt(LocalDateTime.now().plusDays(1))
+                        .status(AppointmentStatus.PENDING)
+                        .client(client)
+                        .barber(barber)
+                        .service(service)
+                        .build();
+        appointment.setId(7L);
+
+        when(appointmentRepository.findById(7L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        appointmentService.cancelAppointment(7L, 2L);
+
+        verify(notificationService)
+                .notify(eq(1L), eq(NotificationType.APPOINTMENT_CANCELLED), any(), any());
     }
 
     @Test

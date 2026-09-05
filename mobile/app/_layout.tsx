@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider } from '../context/AuthContext';
+import { NotificationProvider } from '../context/NotificationContext';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -28,8 +29,10 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false }} />
+        <NotificationProvider>
+          <StatusBar style="dark" />
+          <Stack screenOptions={{ headerShown: false }} />
+        </NotificationProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );
