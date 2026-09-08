@@ -1,0 +1,5 @@
+# SPA fallback for the Expo Router web export (single-output build).
+# Netlify and Cloudflare Pages both read this file: every path that is not a
+# real static asset is served index.html so client-side routing can take over
+# (dynamic routes like /shop/[id], /book/[shopId], /appointment/[id]/pix).
+/*  /index.html  200
