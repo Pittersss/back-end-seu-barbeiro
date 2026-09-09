@@ -354,7 +354,7 @@ export default function AvailabilityScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.bg,
   },
   loading: {
     flex: 1,

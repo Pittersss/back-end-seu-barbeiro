@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../../components/Button';
+import { Card } from '../../components/Card';
 import { Input } from '../../components/Input';
 import { Logo } from '../../components/Logo';
 import { Screen } from '../../components/Screen';
@@ -10,6 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ApiError } from '../../lib/api';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 
 type RoleParam = 'CLIENT' | 'BARBER' | 'OWNER';
 
@@ -56,44 +58,58 @@ export default function ConfirmCodeScreen() {
 
   return (
     <Screen center>
-      <View style={styles.logoWrap}>
-        <Logo size={140} />
+      <View style={styles.hero}>
+        <Logo size={130} />
+        <Text style={styles.title}>Confirme seu e-mail</Text>
+        <Text style={styles.subtitle}>
+          Insira o código de confirmação enviado para {email}
+        </Text>
       </View>
 
-      <Text style={styles.subtitle}>Insira o código de confirmação enviado para {email}</Text>
+      <Card style={styles.card}>
+        <Input
+          accent="blue"
+          placeholder="000000"
+          keyboardType="number-pad"
+          maxLength={6}
+          value={code}
+          onChangeText={setCode}
+          style={styles.codeInput}
+        />
 
-      <Input
-        accent="blue"
-        placeholder="000000"
-        keyboardType="number-pad"
-        maxLength={6}
-        value={code}
-        onChangeText={setCode}
-        style={styles.codeInput}
-      />
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {info ? <Text style={styles.info}>{info}</Text> : null}
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      {info ? <Text style={styles.info}>{info}</Text> : null}
+        <Button title="Confirmar" onPress={handleConfirm} loading={loading} disabled={code.length < 4} />
 
-      <Button title="Confirmar" onPress={handleConfirm} loading={loading} disabled={code.length < 4} />
-
-      <Text style={styles.resend} onPress={resending ? undefined : handleResend}>
-        {resending ? 'Reenviando...' : 'Reenviar código'}
-      </Text>
+        <Text style={styles.resend} onPress={resending ? undefined : handleResend}>
+          {resending ? 'Reenviando...' : 'Reenviar código'}
+        </Text>
+      </Card>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  logoWrap: {
+  hero: {
     alignItems: 'center',
     marginBottom: spacing.xl,
   },
-  subtitle: {
-    fontSize: 15,
+  title: {
+    ...typography.display,
     color: colors.black,
     textAlign: 'center',
-    marginBottom: spacing.lg,
+    marginTop: spacing.md,
+  },
+  subtitle: {
+    ...typography.bodyMuted,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+  },
+  card: {
+    alignSelf: 'stretch',
+    padding: spacing.lg,
   },
   codeInput: {
     textAlign: 'center',

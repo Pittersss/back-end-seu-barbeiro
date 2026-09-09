@@ -3,13 +3,14 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../../components/Button';
+import { Card } from '../../components/Card';
 import { Input } from '../../components/Input';
 import { Logo } from '../../components/Logo';
 import { Screen } from '../../components/Screen';
 import { useAuth } from '../../context/AuthContext';
 import { ApiError } from '../../lib/api';
 import { colors } from '../../theme/colors';
-import { radius, spacing } from '../../theme/spacing';
+import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 
 export default function LoginScreen() {
@@ -35,13 +36,12 @@ export default function LoginScreen() {
   return (
     <Screen center>
       <View style={styles.hero}>
-        <Logo size={220} />
+        <Logo size={200} />
+        <Text style={styles.title}>Bem-vindo de volta</Text>
+        <Text style={styles.subtitle}>Entre para agendar o seu próximo corte</Text>
       </View>
 
-      <Text style={styles.title}>Bem-vindo de volta</Text>
-      <Text style={styles.subtitle}>Entre para agendar o seu próximo corte</Text>
-
-      <View style={styles.form}>
+      <Card style={styles.card}>
         <Input
           accent="blue"
           icon="mail-outline"
@@ -68,7 +68,7 @@ export default function LoginScreen() {
           loading={loading}
           disabled={!email || !password}
         />
-      </View>
+      </Card>
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>Não tem uma conta? </Text>
@@ -82,27 +82,24 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   hero: {
-    alignSelf: 'stretch',
     alignItems: 'center',
-    backgroundColor: colors.blueSoft,
-    borderRadius: radius.card,
-    paddingVertical: spacing.xl,
     marginBottom: spacing.xl,
   },
   title: {
-    ...typography.h1,
+    ...typography.display,
     color: colors.black,
     textAlign: 'center',
-    marginBottom: spacing.xs,
+    marginTop: spacing.lg,
   },
   subtitle: {
     ...typography.bodyMuted,
     color: colors.textMuted,
     textAlign: 'center',
-    marginBottom: spacing.xl,
+    marginTop: spacing.xs,
   },
-  form: {
+  card: {
     alignSelf: 'stretch',
+    padding: spacing.lg,
   },
   error: {
     color: colors.red,

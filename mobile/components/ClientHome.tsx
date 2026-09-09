@@ -92,12 +92,12 @@ export function ClientHome() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.bg,
   },
   header: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
     ...centeredPage,
   },
   greetingRow: {
@@ -106,16 +106,18 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   greeting: {
+    ...typography.label,
     color: colors.textMuted,
-    fontSize: 14,
   },
   title: {
-    ...typography.h1,
+    ...typography.display,
     color: colors.black,
     marginTop: 2,
   },
   list: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xl,
     gap: spacing.md,
     ...centeredPage,
   },
@@ -129,12 +131,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardPressed: {
-    opacity: 0.7,
+    transform: [{ scale: 0.985 }],
+    opacity: 0.9,
   },
   cardIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: colors.blueSoft,
     alignItems: 'center',
     justifyContent: 'center',
@@ -145,16 +148,17 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontFamily: typography.h2.fontFamily,
-    fontSize: 16,
+    fontSize: 17,
+    letterSpacing: 0.3,
     color: colors.black,
   },
   cardSubtitle: {
     fontSize: 13,
     color: colors.textMuted,
-    marginTop: 2,
+    marginTop: 3,
   },
   cardStatus: {
-    fontSize: 12,
-    marginTop: 4,
+    ...typography.caption,
+    marginTop: 6,
   },
 });

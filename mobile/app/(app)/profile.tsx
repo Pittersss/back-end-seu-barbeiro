@@ -369,7 +369,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.bg,
   },
   loading: {
     flex: 1,
@@ -380,12 +380,13 @@ const styles = StyleSheet.create({
     ...centeredPage,
   },
   title: {
-    ...typography.h1,
+    ...typography.display,
     color: colors.black,
     marginBottom: spacing.lg,
   },
   identity: {
     alignItems: 'center',
+    marginBottom: spacing.sm,
   },
   avatarWrap: {
     marginBottom: spacing.sm,

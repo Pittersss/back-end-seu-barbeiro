@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../../components/Button';
+import { Card } from '../../components/Card';
 import { Input } from '../../components/Input';
 import { Logo } from '../../components/Logo';
 import { Screen } from '../../components/Screen';
@@ -13,6 +14,12 @@ import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 
 type RoleParam = 'CLIENT' | 'BARBER' | 'OWNER';
+
+const ROLE_LABELS: Record<RoleParam, string> = {
+  CLIENT: 'Cliente',
+  BARBER: 'Barbeiro',
+  OWNER: 'Dono de barbearia',
+};
 
 export default function RegisterScreen() {
   const { role } = useLocalSearchParams<{ role: RoleParam }>();
@@ -68,96 +75,97 @@ export default function RegisterScreen() {
   return (
     <Screen>
       <View style={styles.hero}>
-        <Logo size={130} />
+        <Logo size={120} />
+        <Text style={styles.title}>Cadastre-se</Text>
+        <Text style={styles.subtitle}>
+          {role ? `Criando conta de ${ROLE_LABELS[role].toLowerCase()}` : 'Crie sua conta para começar'}
+        </Text>
       </View>
 
-      <Text style={styles.title}>Cadastre-se</Text>
-      <Text style={styles.subtitle}>Crie sua conta para começar</Text>
-
-      <Input
-        accent="blue"
-        icon="person-outline"
-        placeholder="Nome completo"
-        value={name}
-        onChangeText={setName}
-      />
-      <Input
-        accent="blue"
-        icon="mail-outline"
-        placeholder="Digite seu e-mail"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <Input
-        accent="blue"
-        icon="call-outline"
-        placeholder="Telefone (opcional)"
-        keyboardType="phone-pad"
-        value={phone}
-        onChangeText={setPhone}
-      />
-      {isBarberLike ? (
+      <Card style={styles.card}>
         <Input
           accent="blue"
-          icon="key-outline"
-          placeholder="Chave Pix (opcional)"
-          value={pixKey}
-          onChangeText={setPixKey}
+          icon="person-outline"
+          placeholder="Nome completo"
+          value={name}
+          onChangeText={setName}
         />
-      ) : null}
-      <Input
-        accent="blue"
-        icon="lock-closed-outline"
-        placeholder="Crie uma senha"
-        secureTextEntry
-        hint="Mínimo de 8 caracteres"
-        value={password}
-        onChangeText={setPassword}
-      />
-      <Input
-        accent="blue"
-        icon="lock-closed-outline"
-        placeholder="Confirme sua senha"
-        secureTextEntry
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        error={passwordsMismatch ? 'As senhas não conferem.' : undefined}
-      />
+        <Input
+          accent="blue"
+          icon="mail-outline"
+          placeholder="Digite seu e-mail"
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+        />
+        <Input
+          accent="blue"
+          icon="call-outline"
+          placeholder="Telefone (opcional)"
+          keyboardType="phone-pad"
+          value={phone}
+          onChangeText={setPhone}
+        />
+        {isBarberLike ? (
+          <Input
+            accent="blue"
+            icon="key-outline"
+            placeholder="Chave Pix (opcional)"
+            value={pixKey}
+            onChangeText={setPixKey}
+          />
+        ) : null}
+        <Input
+          accent="blue"
+          icon="lock-closed-outline"
+          placeholder="Crie uma senha"
+          secureTextEntry
+          hint="Mínimo de 8 caracteres"
+          value={password}
+          onChangeText={setPassword}
+        />
+        <Input
+          accent="blue"
+          icon="lock-closed-outline"
+          placeholder="Confirme sua senha"
+          secureTextEntry
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          error={passwordsMismatch ? 'As senhas não conferem.' : undefined}
+        />
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <View style={styles.buttonWrap}>
         <Button title="Registrar" onPress={handleSubmit} loading={loading} disabled={!canSubmit} />
-      </View>
+      </Card>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   hero: {
-    alignSelf: 'center',
+    alignItems: 'center',
     marginBottom: spacing.lg,
   },
   title: {
-    ...typography.h1,
+    ...typography.display,
     textAlign: 'center',
     color: colors.black,
-    marginBottom: spacing.xs,
+    marginTop: spacing.md,
   },
   subtitle: {
     ...typography.bodyMuted,
     textAlign: 'center',
     color: colors.textMuted,
-    marginBottom: spacing.xl,
+    marginTop: spacing.xs,
+  },
+  card: {
+    padding: spacing.lg,
   },
   error: {
     color: colors.red,
     marginBottom: spacing.md,
     textAlign: 'center',
-  },
-  buttonWrap: {
-    marginTop: spacing.sm,
   },
 });

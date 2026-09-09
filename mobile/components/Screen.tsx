@@ -41,7 +41,7 @@ export function Screen({ children, scroll = true, center = false }: ScreenProps)
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.bg,
   },
   flex: {
     flex: 1,
@@ -51,7 +51,8 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xl,
     ...centeredPage,
   },
   center: {

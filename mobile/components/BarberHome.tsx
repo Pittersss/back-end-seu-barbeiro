@@ -176,7 +176,7 @@ export function BarberHome() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.bg,
   },
   loading: {
     flex: 1,
@@ -189,14 +189,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
   },
   greeting: {
+    ...typography.label,
     color: colors.textMuted,
-    fontSize: 14,
   },
   title: {
-    ...typography.h1,
+    ...typography.display,
     color: colors.black,
     marginTop: 2,
   },
