@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
+import { Logo } from '../../components/Logo';
 import { Screen } from '../../components/Screen';
 import { useAuth } from '../../context/AuthContext';
 import { ApiError } from '../../lib/api';
@@ -27,7 +28,9 @@ export default function RegisterScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const canSubmit = name && email && password.length >= 8 && password === confirmPassword;
+  const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
+  const canSubmit =
+    !!name && !!email && password.length >= 8 && password === confirmPassword;
 
   async function handleSubmit() {
     if (password !== confirmPassword) {
@@ -64,12 +67,24 @@ export default function RegisterScreen() {
 
   return (
     <Screen>
-      <Text style={styles.title}>CADASTRE-SE</Text>
+      <View style={styles.hero}>
+        <Logo size={130} />
+      </View>
 
-      <Input accent="blue" placeholder="Nome completo" value={name} onChangeText={setName} />
+      <Text style={styles.title}>Cadastre-se</Text>
+      <Text style={styles.subtitle}>Crie sua conta para começar</Text>
+
       <Input
         accent="blue"
-        placeholder="Enter your email"
+        icon="person-outline"
+        placeholder="Nome completo"
+        value={name}
+        onChangeText={setName}
+      />
+      <Input
+        accent="blue"
+        icon="mail-outline"
+        placeholder="Digite seu e-mail"
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
@@ -77,27 +92,38 @@ export default function RegisterScreen() {
       />
       <Input
         accent="blue"
+        icon="call-outline"
         placeholder="Telefone (opcional)"
         keyboardType="phone-pad"
         value={phone}
         onChangeText={setPhone}
       />
       {isBarberLike ? (
-        <Input accent="blue" placeholder="Chave Pix (opcional)" value={pixKey} onChangeText={setPixKey} />
+        <Input
+          accent="blue"
+          icon="key-outline"
+          placeholder="Chave Pix (opcional)"
+          value={pixKey}
+          onChangeText={setPixKey}
+        />
       ) : null}
       <Input
-        accent="red"
-        placeholder="Enter your password"
+        accent="blue"
+        icon="lock-closed-outline"
+        placeholder="Crie uma senha"
         secureTextEntry
+        hint="Mínimo de 8 caracteres"
         value={password}
         onChangeText={setPassword}
       />
       <Input
-        accent="red"
-        placeholder="Enter your password again"
+        accent="blue"
+        icon="lock-closed-outline"
+        placeholder="Confirme sua senha"
         secureTextEntry
         value={confirmPassword}
         onChangeText={setConfirmPassword}
+        error={passwordsMismatch ? 'As senhas não conferem.' : undefined}
       />
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -110,11 +136,21 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
+  hero: {
+    alignSelf: 'center',
+    marginBottom: spacing.lg,
+  },
   title: {
     ...typography.h1,
     textAlign: 'center',
     color: colors.black,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xs,
+  },
+  subtitle: {
+    ...typography.bodyMuted,
+    textAlign: 'center',
+    color: colors.textMuted,
+    marginBottom: spacing.xl,
   },
   error: {
     color: colors.red,
