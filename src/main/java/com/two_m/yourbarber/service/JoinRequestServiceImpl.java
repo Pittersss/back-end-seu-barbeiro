@@ -10,6 +10,7 @@ import com.two_m.yourbarber.mapper.JoinRequestMapper;
 import com.two_m.yourbarber.model.Barber;
 import com.two_m.yourbarber.model.BarberShop;
 import com.two_m.yourbarber.model.JoinRequest;
+import com.two_m.yourbarber.model.enums.NotificationType;
 import com.two_m.yourbarber.model.enums.RequestStatus;
 import com.two_m.yourbarber.repository.BarberRepository;
 import com.two_m.yourbarber.repository.BarberShopRepository;
@@ -28,6 +29,7 @@ public class JoinRequestServiceImpl implements JoinRequestService {
     private final JoinRequestRepository joinRequestRepository;
     private final BarberShopRepository barberShopRepository;
     private final BarberRepository barberRepository;
+    private final NotificationService notificationService;
 
     @Override
     public JoinRequestResponseDTO requestToJoin(
@@ -49,7 +51,17 @@ public class JoinRequestServiceImpl implements JoinRequestService {
                         .barberShop(shop)
                         .build();
 
-        return JoinRequestMapper.toDto(joinRequestRepository.save(request));
+        JoinRequestResponseDTO responseDto = JoinRequestMapper.toDto(joinRequestRepository.save(request));
+
+        if (shop.getOwner() != null) {
+            notificationService.notify(
+                    shop.getOwner().getId(),
+                    NotificationType.JOIN_REQUEST,
+                    barber.getName() + " quer entrar na sua barbearia \"" + shop.getName() + "\".",
+                    null);
+        }
+
+        return responseDto;
     }
 
     @Override
@@ -80,7 +92,16 @@ public class JoinRequestServiceImpl implements JoinRequestService {
             barberRepository.save(barber);
         }
 
-        return JoinRequestMapper.toDto(joinRequestRepository.save(request));
+        JoinRequestResponseDTO responseDto = JoinRequestMapper.toDto(joinRequestRepository.save(request));
+
+        String message =
+                decision.isAccepted()
+                        ? "Você foi aceito na barbearia \"" + shop.getName() + "\"."
+                        : "Sua solicitação para entrar na barbearia \"" + shop.getName() + "\" foi rejeitada.";
+        notificationService.notify(
+                request.getBarber().getId(), NotificationType.JOIN_REQUEST_DECIDED, message, null);
+
+        return responseDto;
     }
 
     private JoinRequest findRequestInShop(BarberShop shop, Long requestId) {

@@ -12,4 +12,6 @@ public interface JoinRequestRepository extends JpaRepository<JoinRequest, Long> 
     List<JoinRequest> findByBarberShopIdAndStatus(Long barberShopId, RequestStatus status);
 
     List<JoinRequest> findByBarberId(Long barberId);
+
+    void deleteByBarberShopId(Long barberShopId);
 }

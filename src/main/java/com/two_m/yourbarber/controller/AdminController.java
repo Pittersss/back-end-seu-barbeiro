@@ -1,19 +1,26 @@
 package com.two_m.yourbarber.controller;
 
+import com.two_m.yourbarber.dto.appointment.AppointmentResponseDTO;
 import com.two_m.yourbarber.dto.barbershop.BarberShopRequestDecisionDTO;
 import com.two_m.yourbarber.dto.barbershop.BarberShopRequestResponseDTO;
 import com.two_m.yourbarber.dto.subscription.SubscriptionPaymentDecisionDTO;
 import com.two_m.yourbarber.dto.subscription.SubscriptionPaymentResponseDTO;
+import com.two_m.yourbarber.dto.user.UserProfileDTO;
 import com.two_m.yourbarber.service.AdminService;
 import com.two_m.yourbarber.service.SubscriptionService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -44,5 +51,31 @@ public class AdminController {
     public ResponseEntity<SubscriptionPaymentResponseDTO> decideSubscriptionPayment(
             @PathVariable Long id, @RequestBody SubscriptionPaymentDecisionDTO decision) {
         return ResponseEntity.ok(subscriptionService.decidePayment(id, decision.isApproved()));
+    }
+
+    @GetMapping("/clients")
+    public ResponseEntity<List<UserProfileDTO>> listClients() {
+        return ResponseEntity.ok(adminService.listClients());
+    }
+
+    @DeleteMapping("/clients/{id}")
+    public ResponseEntity<Void> deleteClient(@PathVariable Long id) {
+        adminService.deleteClient(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/barbershops/{id}")
+    public ResponseEntity<Void> deleteBarberShop(@PathVariable Long id) {
+        adminService.deleteBarberShop(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/appointments")
+    public ResponseEntity<Page<AppointmentResponseDTO>> listAppointments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(
+                adminService.listAppointments(
+                        PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "scheduledAt"))));
     }
 }

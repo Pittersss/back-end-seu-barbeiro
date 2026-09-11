@@ -56,5 +56,9 @@ export async function request<T>(
     return undefined as T;
   }
 
-  return (await response.json()) as T;
+  // Some endpoints (e.g. POST /api/auth/resend-code) return 200 with an empty
+  // body. Calling response.json() on those throws a SyntaxError that would
+  // surface as a bogus "request failed" in the UI, so treat empty as undefined.
+  const text = await response.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }

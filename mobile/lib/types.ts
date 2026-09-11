@@ -6,6 +6,16 @@ export type PaymentMethod = 'PIX' | 'CARD' | 'CASH';
 
 export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
+/** Mirrors Spring Data's `Page<T>` JSON shape. */
+export interface Page<T> {
+  content: T[];
+  number: number;
+  size: number;
+  totalPages: number;
+  totalElements: number;
+  last: boolean;
+}
+
 export interface AuthResponse {
   token: string;
   userId: number;
@@ -74,6 +84,32 @@ export interface BarberShopRequestResponse {
   shopPhone?: string;
   requesterId: number;
   requesterName: string;
+  createdAt: string;
+}
+
+export type SubscriptionPaymentStatus = 'PENDING' | 'CONFIRMED' | 'REJECTED';
+
+export interface SubscriptionPaymentResponse {
+  id: number;
+  barberId: number;
+  barberName: string;
+  status: SubscriptionPaymentStatus;
+  amount: number;
+  txId?: string;
+  periodStart?: string;
+  periodEnd?: string;
+  createdAt: string;
+  confirmedAt?: string;
+}
+
+export interface JoinRequestResponse {
+  id: number;
+  status: RequestStatus;
+  message?: string;
+  barberId: number;
+  barberName: string;
+  barberShopId: number;
+  barberShopName: string;
   createdAt: string;
 }
 
@@ -227,7 +263,13 @@ export interface UpdateProfilePayload {
 export type NotificationType =
   | 'APPOINTMENT_REQUESTED'
   | 'APPOINTMENT_CONFIRMED'
-  | 'APPOINTMENT_CANCELLED';
+  | 'APPOINTMENT_CANCELLED'
+  | 'BARBERSHOP_REQUEST'
+  | 'BARBERSHOP_REQUEST_DECIDED'
+  | 'SUBSCRIPTION_PAYMENT_PENDING'
+  | 'SUBSCRIPTION_PAYMENT_DECIDED'
+  | 'JOIN_REQUEST'
+  | 'JOIN_REQUEST_DECIDED';
 
 export interface NotificationItem {
   id: number;

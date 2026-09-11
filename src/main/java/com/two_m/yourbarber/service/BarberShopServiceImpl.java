@@ -13,9 +13,12 @@ import com.two_m.yourbarber.mapper.BarberShopMapper;
 import com.two_m.yourbarber.model.Barber;
 import com.two_m.yourbarber.model.BarberShop;
 import com.two_m.yourbarber.model.BarberShopRequest;
+import com.two_m.yourbarber.model.enums.NotificationType;
+import com.two_m.yourbarber.model.enums.UserRole;
 import com.two_m.yourbarber.repository.BarberRepository;
 import com.two_m.yourbarber.repository.BarberShopRepository;
 import com.two_m.yourbarber.repository.BarberShopRequestRepository;
+import com.two_m.yourbarber.repository.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,11 +33,17 @@ public class BarberShopServiceImpl implements BarberShopService {
     private final BarberShopRequestRepository barberShopRequestRepository;
     private final BarberRepository barberRepository;
     private final SubscriptionService subscriptionService;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     @Override
     public BarberShopRequestResponseDTO requestCreation(
             BarberShopRequestDTO dto, Long ownerId) {
         Barber requester = findBarber(ownerId);
+        if (requester.isBlockedFromOwning()) {
+            throw new ForbiddenOperationException(
+                    "Você não tem permissão para criar uma nova barbearia.");
+        }
         if (requester.getBarberShop() != null) {
             throw new BusinessRuleException("Barber already belongs to a barbershop");
         }
@@ -47,7 +56,19 @@ public class BarberShopServiceImpl implements BarberShopService {
                         .requester(requester)
                         .build();
 
-        return BarberShopMapper.toRequestDto(barberShopRequestRepository.save(request));
+        BarberShopRequestResponseDTO responseDto =
+                BarberShopMapper.toRequestDto(barberShopRequestRepository.save(request));
+
+        String message = requester.getName() + " solicitou a criação da barbearia \""
+                + dto.getShopName() + "\".";
+        userRepository
+                .findByRole(UserRole.ADMIN)
+                .forEach(
+                        admin ->
+                                notificationService.notify(
+                                        admin.getId(), NotificationType.BARBERSHOP_REQUEST, message, null));
+
+        return responseDto;
     }
 
     @Override

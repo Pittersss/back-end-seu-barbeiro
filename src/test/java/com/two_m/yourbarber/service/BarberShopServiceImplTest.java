@@ -19,6 +19,7 @@ import com.two_m.yourbarber.model.enums.UserRole;
 import com.two_m.yourbarber.repository.BarberRepository;
 import com.two_m.yourbarber.repository.BarberShopRepository;
 import com.two_m.yourbarber.repository.BarberShopRequestRepository;
+import com.two_m.yourbarber.repository.UserRepository;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,8 @@ class BarberShopServiceImplTest {
     @Mock private BarberShopRequestRepository barberShopRequestRepository;
     @Mock private BarberRepository barberRepository;
     @Mock private SubscriptionService subscriptionService;
+    @Mock private NotificationService notificationService;
+    @Mock private UserRepository userRepository;
 
     @InjectMocks private BarberShopServiceImpl barberShopService;
 
@@ -78,6 +81,19 @@ class BarberShopServiceImplTest {
 
         assertThat(result.getShopName()).isEqualTo("New Shop");
         assertThat(result.getRequesterId()).isEqualTo(1L);
+    }
+
+    @Test
+    void requestCreation_barberBlockedFromOwning_throwsForbidden() {
+        Barber requester = barber(1L);
+        requester.setBlockedFromOwning(true);
+        when(barberRepository.findById(1L)).thenReturn(Optional.of(requester));
+
+        BarberShopRequestDTO dto = new BarberShopRequestDTO("New Shop", "Address", "111");
+
+        assertThrows(
+                ForbiddenOperationException.class,
+                () -> barberShopService.requestCreation(dto, 1L));
     }
 
     @Test

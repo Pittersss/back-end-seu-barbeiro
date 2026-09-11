@@ -9,10 +9,13 @@ import com.two_m.yourbarber.exception.SubscriptionRequiredException;
 import com.two_m.yourbarber.mapper.SubscriptionPaymentMapper;
 import com.two_m.yourbarber.model.Barber;
 import com.two_m.yourbarber.model.SubscriptionPayment;
+import com.two_m.yourbarber.model.enums.NotificationType;
 import com.two_m.yourbarber.model.enums.SubscriptionPaymentStatus;
 import com.two_m.yourbarber.model.enums.SubscriptionStatus;
+import com.two_m.yourbarber.model.enums.UserRole;
 import com.two_m.yourbarber.repository.BarberRepository;
 import com.two_m.yourbarber.repository.SubscriptionPaymentRepository;
+import com.two_m.yourbarber.repository.UserRepository;
 import com.two_m.yourbarber.service.pix.PixBrCodeGenerator;
 import com.two_m.yourbarber.service.pix.PixQrCodeImageGenerator;
 import java.math.BigDecimal;
@@ -35,6 +38,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     private final SubscriptionPaymentRepository subscriptionPaymentRepository;
     private final BarberRepository barberRepository;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     @Value("${subscription.pix-key}")
     private String pixKey;
@@ -60,17 +65,27 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         List<SubscriptionPayment> payments =
                 subscriptionPaymentRepository.findByBarberIdOrderByCreatedAtDesc(barberId);
 
+        Optional<SubscriptionPayment> existingPending =
+                payments.stream().filter(p -> p.getStatus() == SubscriptionPaymentStatus.PENDING).findFirst();
+
         SubscriptionPayment payment =
-                payments.stream()
-                        .filter(p -> p.getStatus() == SubscriptionPaymentStatus.PENDING)
-                        .findFirst()
-                        .orElseGet(
-                                () ->
-                                        subscriptionPaymentRepository.save(
-                                                SubscriptionPayment.builder()
-                                                        .barber(barber)
-                                                        .amount(amount)
-                                                        .build()));
+                existingPending.orElseGet(
+                        () ->
+                                subscriptionPaymentRepository.save(
+                                        SubscriptionPayment.builder().barber(barber).amount(amount).build()));
+
+        if (existingPending.isEmpty()) {
+            String message = barber.getName() + " gerou uma cobrança de assinatura pendente de confirmação.";
+            userRepository
+                    .findByRole(UserRole.ADMIN)
+                    .forEach(
+                            admin ->
+                                    notificationService.notify(
+                                            admin.getId(),
+                                            NotificationType.SUBSCRIPTION_PAYMENT_PENDING,
+                                            message,
+                                            null));
+        }
 
         if (payment.getTxId() == null) {
             payment.setTxId(TXID_PREFIX + payment.getId());
@@ -140,7 +155,17 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             payment.setStatus(SubscriptionPaymentStatus.REJECTED);
         }
 
-        return SubscriptionPaymentMapper.toDto(subscriptionPaymentRepository.save(payment));
+        SubscriptionPaymentResponseDTO responseDto =
+                SubscriptionPaymentMapper.toDto(subscriptionPaymentRepository.save(payment));
+
+        String message =
+                approved
+                        ? "Seu pagamento de assinatura foi confirmado."
+                        : "Seu pagamento de assinatura foi rejeitado.";
+        notificationService.notify(
+                payment.getBarber().getId(), NotificationType.SUBSCRIPTION_PAYMENT_DECIDED, message, null);
+
+        return responseDto;
     }
 
     private List<SubscriptionPayment> currentPayments(Long barberId) {

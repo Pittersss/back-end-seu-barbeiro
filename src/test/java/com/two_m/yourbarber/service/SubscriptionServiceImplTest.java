@@ -19,6 +19,7 @@ import com.two_m.yourbarber.model.enums.SubscriptionStatus;
 import com.two_m.yourbarber.model.enums.UserRole;
 import com.two_m.yourbarber.repository.BarberRepository;
 import com.two_m.yourbarber.repository.SubscriptionPaymentRepository;
+import com.two_m.yourbarber.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -36,6 +37,8 @@ class SubscriptionServiceImplTest {
 
     @Mock private SubscriptionPaymentRepository subscriptionPaymentRepository;
     @Mock private BarberRepository barberRepository;
+    @Mock private NotificationService notificationService;
+    @Mock private UserRepository userRepository;
 
     @InjectMocks private SubscriptionServiceImpl subscriptionService;
 

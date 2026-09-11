@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,6 +14,7 @@ import com.two_m.yourbarber.dto.appointment.AppointmentResponseDTO;
 import com.two_m.yourbarber.dto.subscription.SubscriptionStatusDTO;
 import com.two_m.yourbarber.exception.BusinessRuleException;
 import com.two_m.yourbarber.exception.ForbiddenOperationException;
+import com.two_m.yourbarber.exception.SubscriptionRequiredException;
 import com.two_m.yourbarber.model.Appointment;
 import com.two_m.yourbarber.model.Barber;
 import com.two_m.yourbarber.model.BarberShop;
@@ -292,6 +294,28 @@ class AppointmentServiceImplTest {
     }
 
     @Test
+    void getAppointmentsForUser_barber_assertsSubscriptionActive() {
+        when(appointmentRepository.findByBarberId(2L)).thenReturn(List.of());
+
+        appointmentService.getAppointmentsForUser(2L, UserRole.BARBER);
+
+        verify(subscriptionService).assertActive(2L);
+    }
+
+    @Test
+    void getAppointmentsForUser_barberInactiveSubscription_throwsAndSkipsLookup() {
+        doThrow(new SubscriptionRequiredException("inactive"))
+                .when(subscriptionService)
+                .assertActive(2L);
+
+        assertThrows(
+                SubscriptionRequiredException.class,
+                () -> appointmentService.getAppointmentsForUser(2L, UserRole.BARBER));
+
+        verify(appointmentRepository, never()).findByBarberId(any());
+    }
+
+    @Test
     void updateStatus_assignedBarber_updatesStatus() {
         BarberShop shop = BarberShop.builder().name("Shop").build();
         Client client = client(1L);
@@ -464,6 +488,82 @@ class AppointmentServiceImplTest {
 
         verify(notificationService)
                 .notify(eq(1L), eq(NotificationType.APPOINTMENT_CANCELLED), any(), any());
+    }
+
+    @Test
+    void cancelAppointment_barberInitiated_assertsSubscriptionActive() {
+        BarberShop shop = BarberShop.builder().name("Shop").build();
+        Client client = client(1L);
+        Barber barber = barber(2L, shop, true);
+        com.two_m.yourbarber.model.Service service = offering(3L, shop, true);
+        Appointment appointment =
+                Appointment.builder()
+                        .scheduledAt(LocalDateTime.now().plusDays(1))
+                        .status(AppointmentStatus.PENDING)
+                        .client(client)
+                        .barber(barber)
+                        .service(service)
+                        .build();
+        appointment.setId(7L);
+
+        when(appointmentRepository.findById(7L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        appointmentService.cancelAppointment(7L, 2L);
+
+        verify(subscriptionService).assertActive(2L);
+    }
+
+    @Test
+    void cancelAppointment_barberInitiatedInactiveSubscription_throws() {
+        BarberShop shop = BarberShop.builder().name("Shop").build();
+        Client client = client(1L);
+        Barber barber = barber(2L, shop, true);
+        com.two_m.yourbarber.model.Service service = offering(3L, shop, true);
+        Appointment appointment =
+                Appointment.builder()
+                        .scheduledAt(LocalDateTime.now().plusDays(1))
+                        .status(AppointmentStatus.PENDING)
+                        .client(client)
+                        .barber(barber)
+                        .service(service)
+                        .build();
+        appointment.setId(7L);
+
+        when(appointmentRepository.findById(7L)).thenReturn(Optional.of(appointment));
+        doThrow(new SubscriptionRequiredException("inactive"))
+                .when(subscriptionService)
+                .assertActive(2L);
+
+        assertThrows(
+                SubscriptionRequiredException.class,
+                () -> appointmentService.cancelAppointment(7L, 2L));
+
+        assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.PENDING);
+    }
+
+    @Test
+    void cancelAppointment_clientInitiated_doesNotAssertSubscriptionActive() {
+        BarberShop shop = BarberShop.builder().name("Shop").build();
+        Client client = client(1L);
+        Barber barber = barber(2L, shop, true);
+        com.two_m.yourbarber.model.Service service = offering(3L, shop, true);
+        Appointment appointment =
+                Appointment.builder()
+                        .scheduledAt(LocalDateTime.now().plusDays(1))
+                        .status(AppointmentStatus.PENDING)
+                        .client(client)
+                        .barber(barber)
+                        .service(service)
+                        .build();
+        appointment.setId(7L);
+
+        when(appointmentRepository.findById(7L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        appointmentService.cancelAppointment(7L, 1L);
+
+        verify(subscriptionService, never()).assertActive(any());
     }
 
     @Test

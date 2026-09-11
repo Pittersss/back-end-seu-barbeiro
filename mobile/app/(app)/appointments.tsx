@@ -6,12 +6,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '../../components/Avatar';
 import { StatusBadge } from '../../components/Badge';
+import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { NotificationBell } from '../../components/NotificationBell';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { ApiError } from '../../lib/api';
+import { listAdminAppointments } from '../../lib/api/admin';
 import { cancelAppointment, listAppointments, updateAppointmentStatus } from '../../lib/api/appointments';
 import { blockClient, listBlockedClients } from '../../lib/api/barbers';
 import { formatDate, formatTime } from '../../lib/format';
@@ -26,11 +28,13 @@ type PendingAction = { type: 'cancel' | 'block'; appointment: Appointment };
 
 const OPEN_STATUSES: Appointment['status'][] = ['PENDING', 'CONFIRMED'];
 const PAYMENT_LABELS: Record<string, string> = { PIX: 'Pix', CARD: 'Cartão', CASH: 'Dinheiro' };
+const ADMIN_PAGE_SIZE = 20;
 
 export default function AppointmentsScreen() {
   const { session } = useAuth();
   const { refresh: refreshNotifications } = useNotifications();
   const isBarber = session?.role === 'BARBER';
+  const isAdmin = session?.role === 'ADMIN';
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [blockedIds, setBlockedIds] = useState<Set<number>>(new Set());
@@ -41,9 +45,19 @@ export default function AppointmentsScreen() {
   const [pending, setPending] = useState<PendingAction | null>(null);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [adminPage, setAdminPage] = useState(0);
+  const [adminHasMore, setAdminHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const load = useCallback(async () => {
     try {
+      if (isAdmin) {
+        const result = await listAdminAppointments(0, ADMIN_PAGE_SIZE);
+        setAppointments(result.content);
+        setAdminPage(0);
+        setAdminHasMore(!result.last);
+        return;
+      }
       const data = await listAppointments();
       data.sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
       setAppointments(data);
@@ -59,7 +73,21 @@ export default function AppointmentsScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [isBarber, session]);
+  }, [isAdmin, isBarber, session]);
+
+  async function handleLoadMore() {
+    if (!isAdmin || !adminHasMore || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = adminPage + 1;
+      const result = await listAdminAppointments(nextPage, ADMIN_PAGE_SIZE);
+      setAppointments((prev) => [...prev, ...result.content]);
+      setAdminPage(nextPage);
+      setAdminHasMore(!result.last);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   useFocusEffect(
     useCallback(() => {
@@ -102,9 +130,10 @@ export default function AppointmentsScreen() {
   }
 
   const visible = useMemo(() => {
+    if (isAdmin) return appointments;
     const open = filter === 'upcoming';
     return appointments.filter((a) => OPEN_STATUSES.includes(a.status) === open);
-  }, [appointments, filter]);
+  }, [appointments, filter, isAdmin]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -113,19 +142,21 @@ export default function AppointmentsScreen() {
           <Text style={styles.title}>Meus agendamentos</Text>
           <NotificationBell />
         </View>
-        <View style={styles.segment}>
-          {(['upcoming', 'history'] as Filter[]).map((key) => (
-            <Pressable
-              key={key}
-              onPress={() => setFilter(key)}
-              style={[styles.segmentItem, filter === key && styles.segmentItemActive]}
-            >
-              <Text style={[styles.segmentText, filter === key && styles.segmentTextActive]}>
-                {key === 'upcoming' ? 'Próximos' : 'Histórico'}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        {!isAdmin ? (
+          <View style={styles.segment}>
+            {(['upcoming', 'history'] as Filter[]).map((key) => (
+              <Pressable
+                key={key}
+                onPress={() => setFilter(key)}
+                style={[styles.segmentItem, filter === key && styles.segmentItemActive]}
+              >
+                <Text style={[styles.segmentText, filter === key && styles.segmentTextActive]}>
+                  {key === 'upcoming' ? 'Próximos' : 'Histórico'}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </View>
 
@@ -145,15 +176,31 @@ export default function AppointmentsScreen() {
         ListEmptyComponent={
           !loading ? (
             <Text style={styles.empty}>
-              {filter === 'upcoming'
-                ? 'Nenhum agendamento em aberto.'
-                : 'Nenhum agendamento no histórico.'}
+              {isAdmin
+                ? 'Nenhum agendamento encontrado.'
+                : filter === 'upcoming'
+                  ? 'Nenhum agendamento em aberto.'
+                  : 'Nenhum agendamento no histórico.'}
             </Text>
+          ) : null
+        }
+        onEndReachedThreshold={0.4}
+        onEndReached={isAdmin ? handleLoadMore : undefined}
+        ListFooterComponent={
+          isAdmin && adminHasMore ? (
+            <Button
+              title="Carregar mais"
+              variant="outline"
+              size="sm"
+              loading={loadingMore}
+              onPress={handleLoadMore}
+              style={styles.loadMoreButton}
+            />
           ) : null
         }
         renderItem={({ item }) => {
           const busy = actioningId === item.id;
-          const canCancel = item.status === 'PENDING' || item.status === 'CONFIRMED';
+          const canCancel = !isAdmin && (item.status === 'PENDING' || item.status === 'CONFIRMED');
           const counterpart = isBarber ? item.clientName : item.barberName;
           const counterpartAvatar = isBarber ? item.clientAvatarBase64 : item.barberAvatarBase64;
           const canBlock = isBarber && !blockedIds.has(item.clientId);
@@ -343,5 +390,9 @@ const styles = StyleSheet.create({
     color: colors.red,
     fontSize: 13,
     fontWeight: '600',
+  },
+  loadMoreButton: {
+    marginTop: spacing.sm,
+    marginBottom: spacing.xl,
   },
 });

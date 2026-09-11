@@ -8,8 +8,10 @@ import { Avatar } from '../../../components/Avatar';
 import { Button } from '../../../components/Button';
 import { Card } from '../../../components/Card';
 import { SectionHeader } from '../../../components/SectionHeader';
+import { useAuth } from '../../../context/AuthContext';
 import { ApiError } from '../../../lib/api';
 import { getBarberShop, listShopBarbers } from '../../../lib/api/barbershops';
+import { requestToJoinShop } from '../../../lib/api/join-requests';
 import { listServices } from '../../../lib/api/services';
 import { formatCurrency, formatDuration } from '../../../lib/format';
 import type { Barber, BarberShop, Service } from '../../../lib/types';
@@ -21,12 +23,17 @@ import { typography } from '../../../theme/typography';
 export default function ShopDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const shopId = Number(id);
+  const { session } = useAuth();
+  const isBarber = session?.role === 'BARBER';
 
   const [shop, setShop] = useState<BarberShop | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const [joinSent, setJoinSent] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -60,6 +67,19 @@ export default function ShopDetailScreen() {
       };
     }, [shopId]),
   );
+
+  async function handleRequestJoin() {
+    setJoinError(null);
+    setJoining(true);
+    try {
+      await requestToJoinShop(shopId);
+      setJoinSent(true);
+    } catch (err) {
+      setJoinError(err instanceof ApiError ? err.message : 'Não foi possível enviar a solicitação.');
+    } finally {
+      setJoining(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -158,15 +178,29 @@ export default function ShopDetailScreen() {
         )}
       </ScrollView>
 
-      <View style={styles.footer}>
-        <Button
-          title="Agendar Horário"
-          disabled={!bookable}
-          onPress={() =>
-            router.push({ pathname: '/(app)/book/[shopId]', params: { shopId: String(shopId) } })
-          }
-        />
-      </View>
+      {isBarber ? (
+        shop.acceptingBarbers ? (
+          <View style={styles.footer}>
+            {joinError ? <Text style={styles.joinError}>{joinError}</Text> : null}
+            <Button
+              title={joinSent ? 'Solicitação enviada' : 'Solicitar entrada'}
+              onPress={handleRequestJoin}
+              loading={joining}
+              disabled={joinSent}
+            />
+          </View>
+        ) : null
+      ) : (
+        <View style={styles.footer}>
+          <Button
+            title="Agendar Horário"
+            disabled={!bookable}
+            onPress={() =>
+              router.push({ pathname: '/(app)/book/[shopId]', params: { shopId: String(shopId) } })
+            }
+          />
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -277,5 +311,11 @@ const styles = StyleSheet.create({
     borderTopColor: colors.line,
     backgroundColor: colors.surface,
     ...centeredPage,
+  },
+  joinError: {
+    color: colors.red,
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
   },
 });

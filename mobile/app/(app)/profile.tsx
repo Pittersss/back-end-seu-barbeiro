@@ -356,6 +356,15 @@ export default function ProfileScreen() {
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={colors.textFaint} />
               </Pressable>
+              <View style={styles.navDivider} />
+              <Pressable style={styles.navRow} onPress={() => router.push('/(app)/join-requests')}>
+                <Ionicons name="person-add-outline" size={20} color={colors.black} />
+                <View style={styles.navText}>
+                  <Text style={styles.navTitle}>Solicitações de entrada</Text>
+                  <Text style={styles.navHint}>Barbeiros pedindo para entrar na equipe</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textFaint} />
+              </Pressable>
             </Card>
           </>
         ) : null}

@@ -14,4 +14,6 @@ public interface ClientBlockRepository extends JpaRepository<ClientBlock, Long> 
     boolean existsByBarberIdAndClientId(Long barberId, Long clientId);
 
     Optional<ClientBlock> findByBarberIdAndClientId(Long barberId, Long clientId);
+
+    void deleteByClientId(Long clientId);
 }

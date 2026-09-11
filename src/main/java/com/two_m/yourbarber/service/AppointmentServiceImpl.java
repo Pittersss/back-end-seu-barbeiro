@@ -101,6 +101,9 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     public List<AppointmentResponseDTO> getAppointmentsForUser(Long userId, UserRole role) {
+        if (role == UserRole.BARBER) {
+            subscriptionService.assertActive(userId);
+        }
         List<Appointment> appointments =
                 switch (role) {
                     case CLIENT -> appointmentRepository.findByClientId(userId);
@@ -144,6 +147,9 @@ public class AppointmentServiceImpl implements AppointmentService {
                         || appointment.getBarber().getId().equals(requesterId);
         if (!isParticipant) {
             throw new ForbiddenOperationException("You are not part of this appointment");
+        }
+        if (appointment.getBarber().getId().equals(requesterId)) {
+            subscriptionService.assertActive(requesterId);
         }
         if (appointment.getStatus() == AppointmentStatus.CANCELLED
                 || appointment.getStatus() == AppointmentStatus.COMPLETED) {

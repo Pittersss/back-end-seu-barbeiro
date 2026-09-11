@@ -34,6 +34,7 @@ class JoinRequestServiceImplTest {
     @Mock private JoinRequestRepository joinRequestRepository;
     @Mock private BarberShopRepository barberShopRepository;
     @Mock private BarberRepository barberRepository;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks private JoinRequestServiceImpl joinRequestService;
 

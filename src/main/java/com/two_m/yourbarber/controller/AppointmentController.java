@@ -4,7 +4,9 @@ import com.two_m.yourbarber.dto.appointment.AppointmentPostDTO;
 import com.two_m.yourbarber.dto.appointment.AppointmentResponseDTO;
 import com.two_m.yourbarber.dto.appointment.AppointmentStatusDTO;
 import com.two_m.yourbarber.dto.pix.PixQrCodeResponseDTO;
+import com.two_m.yourbarber.exception.ForbiddenOperationException;
 import com.two_m.yourbarber.model.User;
+import com.two_m.yourbarber.model.enums.UserRole;
 import com.two_m.yourbarber.service.AppointmentService;
 import com.two_m.yourbarber.service.pix.PixService;
 import jakarta.validation.Valid;
@@ -33,6 +35,9 @@ public class AppointmentController {
     public ResponseEntity<AppointmentResponseDTO> createAppointment(
             @Valid @RequestBody AppointmentPostDTO dto,
             @AuthenticationPrincipal User currentUser) {
+        if (currentUser.getRole() != UserRole.CLIENT) {
+            throw new ForbiddenOperationException("Only clients can book appointments");
+        }
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(appointmentService.createAppointment(dto, currentUser.getId()));
     }

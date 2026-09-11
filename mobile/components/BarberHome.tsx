@@ -161,6 +161,11 @@ export function BarberHome() {
               está aguardando aprovação do administrador.
             </Text>
             <Button
+              title="Entrar em uma barbearia existente"
+              onPress={() => router.push('/(app)/join-shop')}
+              style={styles.cardButton}
+            />
+            <Button
               title="Solicitar criação de barbearia"
               variant="outline"
               onPress={() => router.push('/(auth)/register-shop')}

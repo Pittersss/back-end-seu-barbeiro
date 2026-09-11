@@ -1,7 +1,10 @@
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useNotifications } from '../context/NotificationContext';
 import { formatDateTime } from '../lib/format';
+import type { NotificationItem, NotificationType } from '../lib/types';
 import { colors } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -11,8 +14,31 @@ interface NotificationPanelProps {
   onClose: () => void;
 }
 
+// Where tapping each notification type should take the user — the screen that
+// actually handles that situation, not just a generic inbox.
+const NOTIFICATION_ROUTES: Partial<Record<NotificationType, string>> = {
+  APPOINTMENT_REQUESTED: '/(app)/appointments',
+  APPOINTMENT_CONFIRMED: '/(app)/appointments',
+  APPOINTMENT_CANCELLED: '/(app)/appointments',
+  BARBERSHOP_REQUEST: '/(app)/home',
+  BARBERSHOP_REQUEST_DECIDED: '/(app)/home',
+  SUBSCRIPTION_PAYMENT_PENDING: '/(app)/home',
+  SUBSCRIPTION_PAYMENT_DECIDED: '/(app)/subscription',
+  JOIN_REQUEST: '/(app)/join-requests',
+  JOIN_REQUEST_DECIDED: '/(app)/home',
+};
+
 export function NotificationPanel({ visible, onClose }: NotificationPanelProps) {
-  const { notifications, unreadCount, markAllRead } = useNotifications();
+  const { notifications, unreadCount, markAllRead, markRead } = useNotifications();
+
+  function handlePress(item: NotificationItem) {
+    onClose();
+    markRead(item.id);
+    const route = NOTIFICATION_ROUTES[item.type];
+    if (route) {
+      router.push(route as never);
+    }
+  }
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -33,13 +59,19 @@ export function NotificationPanel({ visible, onClose }: NotificationPanelProps) 
             style={styles.list}
             ListEmptyComponent={<Text style={styles.empty}>Nenhuma notificação ainda.</Text>}
             renderItem={({ item }) => (
-              <View style={styles.item}>
+              <Pressable
+                style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
+                onPress={() => handlePress(item)}
+              >
                 {!item.read ? <View style={styles.unreadDot} /> : <View style={styles.dotSpacer} />}
                 <View style={styles.itemBody}>
                   <Text style={styles.message}>{item.message}</Text>
                   <Text style={styles.date}>{formatDateTime(item.createdAt)}</Text>
                 </View>
-              </View>
+                {NOTIFICATION_ROUTES[item.type] ? (
+                  <Ionicons name="chevron-forward" size={16} color={colors.textFaint} />
+                ) : null}
+              </Pressable>
             )}
           />
         </Pressable>
@@ -89,10 +121,14 @@ const styles = StyleSheet.create({
   },
   item: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
     paddingVertical: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: colors.line,
+  },
+  itemPressed: {
+    opacity: 0.6,
   },
   unreadDot: {
     width: 8,
@@ -100,6 +136,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.danger,
     marginTop: 6,
+    alignSelf: 'flex-start',
   },
   dotSpacer: {
     width: 8,

@@ -13,6 +13,7 @@ interface NotificationContextValue {
   unreadCount: number;
   refresh: () => Promise<void>;
   markAllRead: () => Promise<void>;
+  markRead: (id: number) => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextValue | undefined>(undefined);
@@ -130,6 +131,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         await notificationsApi.markAllNotificationsRead();
         setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
         setUnreadCount(0);
+      },
+      markRead: async (id: number) => {
+        const target = notifications.find((n) => n.id === id);
+        if (!target || target.read) return;
+        await notificationsApi.markNotificationRead(id);
+        setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+        setUnreadCount((prev) => Math.max(0, prev - 1));
       },
     }),
     [notifications, unreadCount],

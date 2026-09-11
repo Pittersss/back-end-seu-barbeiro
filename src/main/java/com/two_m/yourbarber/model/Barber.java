@@ -42,4 +42,8 @@ public class Barber extends User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "barber_shop_id")
     private BarberShop barberShop;
+
+    /** Set when an admin deletes a barbershop this barber owned — they can no longer create another. */
+    @Builder.Default
+    private boolean blockedFromOwning = false;
 }
