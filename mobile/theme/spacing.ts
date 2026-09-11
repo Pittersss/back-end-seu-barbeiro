@@ -9,7 +9,7 @@ export const spacing = {
 
 export const radius = {
   pill: 999,
-  card: 20,
+  card: 22,
   field: 14,
-  sm: 8,
+  sm: 10,
 } as const;

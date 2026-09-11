@@ -36,6 +36,6 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
   },
   padded: {
-    padding: spacing.md,
+    padding: spacing.md + 2,
   },
 });

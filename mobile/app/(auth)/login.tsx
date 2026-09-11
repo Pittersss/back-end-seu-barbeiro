@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../../components/Button';
+import { Card } from '../../components/Card';
 import { Input } from '../../components/Input';
 import { Logo } from '../../components/Logo';
 import { Screen } from '../../components/Screen';
@@ -10,6 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ApiError } from '../../lib/api';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -33,34 +35,45 @@ export default function LoginScreen() {
 
   return (
     <Screen center>
-      <View style={styles.logoWrap}>
-        <Logo size={170} />
+      <View style={styles.hero}>
+        <Logo size={200} />
+        <Text style={styles.title}>Bem-vindo de volta</Text>
+        <Text style={styles.subtitle}>Entre para agendar o seu próximo corte</Text>
       </View>
 
-      <Input
-        accent="blue"
-        placeholder="Enter your email"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <Input
-        accent="red"
-        placeholder="Enter your password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+      <Card style={styles.card}>
+        <Input
+          accent="blue"
+          icon="mail-outline"
+          placeholder="Digite seu e-mail"
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+        />
+        <Input
+          accent="blue"
+          icon="lock-closed-outline"
+          placeholder="Digite sua senha"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <Button title="Login" onPress={handleLogin} loading={loading} disabled={!email || !password} />
+        <Button
+          title="Entrar"
+          onPress={handleLogin}
+          loading={loading}
+          disabled={!email || !password}
+        />
+      </Card>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>You don&apos;t have an account? </Text>
+        <Text style={styles.footerText}>Não tem uma conta? </Text>
         <Link href="/(auth)/register-role" style={styles.link}>
-          Register
+          Cadastre-se
         </Link>
       </View>
     </Screen>
@@ -68,9 +81,25 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  logoWrap: {
+  hero: {
     alignItems: 'center',
     marginBottom: spacing.xl,
+  },
+  title: {
+    ...typography.display,
+    color: colors.black,
+    textAlign: 'center',
+    marginTop: spacing.lg,
+  },
+  subtitle: {
+    ...typography.bodyMuted,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+  },
+  card: {
+    alignSelf: 'stretch',
+    padding: spacing.lg,
   },
   error: {
     color: colors.red,
@@ -80,10 +109,10 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
   },
   footerText: {
-    color: colors.black,
+    color: colors.textMuted,
   },
   link: {
     color: colors.blue,

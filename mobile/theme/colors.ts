@@ -3,15 +3,19 @@ export const colors = {
   white: '#FFFFFF',
   red: '#C1272D',
   blue: '#2F37C9',
-  // Neutral surfaces / hairlines — same greyscale family as `pill`, pulled out
-  // so cards and section backgrounds read as one system.
+  // Page canvas — a warm off-white. Cards/inputs stay pure white on top of it,
+  // which gives the layout depth without leaning on heavy shadows (minimalist
+  // sites use a tinted ground + white surfaces instead of drop shadows).
+  bg: '#F6F6F3',
+  // Neutral surfaces / hairlines — same warm greyscale family, pulled out so
+  // cards and section backgrounds read as one system.
   surface: '#FFFFFF',
-  surfaceAlt: '#F5F5F7',
-  line: '#ECECEF',
-  pill: '#E9E9EC',
-  pillBorder: '#DADADA',
-  textMuted: '#8A8A8E',
-  textFaint: '#B8B8BC',
+  surfaceAlt: '#F1F1EE',
+  line: '#E7E7E2',
+  pill: '#ECECE8',
+  pillBorder: '#DCDCD6',
+  textMuted: '#78787D',
+  textFaint: '#B4B4B0',
   success: '#2E7D32',
   warning: '#B8860B',
   danger: '#C1272D',

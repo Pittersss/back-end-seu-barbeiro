@@ -23,10 +23,20 @@ export default function AppLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.black,
+        tabBarActiveTintColor: colors.blue,
         tabBarInactiveTintColor: colors.textFaint,
-        tabBarLabelStyle: { fontFamily: fonts.headingMedium, fontSize: 11 },
-        tabBarStyle: { borderTopColor: colors.pillBorder },
+        tabBarLabelStyle: {
+          fontFamily: fonts.headingMedium,
+          fontSize: 11,
+          letterSpacing: 0.4,
+        },
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.line,
+          borderTopWidth: 1,
+          paddingTop: 6,
+        },
+        sceneStyle: { backgroundColor: colors.bg },
       }}
     >
       <Tabs.Screen

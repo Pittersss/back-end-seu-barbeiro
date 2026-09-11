@@ -97,11 +97,11 @@ const styles = StyleSheet.create({
   field: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceAlt,
+    backgroundColor: colors.surface,
     borderRadius: radius.field,
     borderWidth: 1.5,
     borderColor: colors.line,
-    height: 52,
+    height: 54,
     paddingHorizontal: spacing.md,
   },
   fieldDisabled: {
