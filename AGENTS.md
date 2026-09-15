@@ -18,7 +18,7 @@ there cost real debugging time once already.
     mapper/               static entity <-> DTO mappers (referenced from services)
     security/             JwtAuthenticationFilter, JwtTokenProvider
     config/                SecurityConfig
-  src/main/resources/db/migration/   Flyway migrations (V1..V7 so far)
+  src/main/resources/db/migration/   Flyway migrations (V1..V20 so far)
   src/test/java/...       mirrors main/java, Mockito-based service tests
 mobile/                 Expo Router app (TypeScript), see mobile/README.md
   app/(auth)/            login, register-role, register, confirm-code, register-shop
@@ -44,28 +44,74 @@ mobile/                 Expo Router app (TypeScript), see mobile/README.md
   (`PENDING`/`APPROVED`/`REJECTED`), approved only via `AdminController`
   (`GET /api/admin/barbershop-requests`, `PATCH /api/admin/barbershop-requests/{id}`).
   Right after registering as an owner, the barber has `barberShopId == null` until an
-  admin approves the request — the mobile app's `_barber-home.tsx` renders a distinct
-  "pending approval" state for this.
+  admin approves the request — `components/BarberHome.tsx` renders a distinct
+  "pending approval" state for this, with a second button to browse existing shops
+  instead (see the join-request flow below).
+- A barber who wants to join an **existing** shop (not create/own one) uses a separate
+  flow: `POST/GET/PATCH /api/barbershops/{shopId}/join-requests`
+  (`JoinRequestController`/`JoinRequestServiceImpl`), gated on the shop having
+  `acceptingBarbers=true` and the barber not already belonging to one. Wired end-to-end
+  in mobile: `app/(app)/join-shop.tsx` (browse shops accepting barbers) →
+  `app/(app)/shop/[id].tsx`'s "Solicitar entrada" button (barber-only footer, replaces
+  "Agendar Horário") → owner reviews/accepts at `app/(app)/join-requests.tsx`, linked
+  from `profile.tsx`'s "Minha barbearia" section. Both sides get notified (see the
+  notification section below). This used to be backend-only/dead from the mobile
+  app's perspective — don't assume a backend endpoint without a mobile screen is
+  unused; check for exactly this pattern before adding a duplicate.
+- Admin can delete a client (`DELETE /api/admin/clients/{id}`) or a barbershop
+  (`DELETE /api/admin/barbershops/{id}`) from `components/AdminHome.tsx`. Deleting a
+  barbershop detaches every barber in it (`barberShop = null`) and sets
+  `Barber.blockedFromOwning = true` on the owner, so `BarberShopServiceImpl
+  .requestCreation()` now rejects (403) any further `POST /api/barbershops` from that
+  same barber — they can still join another shop as staff, just never own one again.
+  There is no "unblock" endpoint; that field would need a direct DB edit today.
 - `SecurityConfig` permits `/api/auth/**` and gates `/api/admin/**` behind `ROLE_ADMIN`;
   everything else requires a valid JWT (`Authorization: Bearer <token>`).
 - An admin account is auto-provisioned from `admin.default-email` /
-  `admin.default-password` (`application.properties`, env-overridable). No admin UI
-  exists in the mobile app — approve/reject shop requests via curl/Postman for now.
+  `admin.default-password` (`application.properties`, env-overridable). It has a real
+  mobile UI now: logging in as `ADMIN` routes `app/(app)/home.tsx` to
+  `components/AdminHome.tsx` (not `BarberHome` — don't let that fallback regress),
+  which approves/rejects barbershop requests and subscription payments, lists/deletes
+  clients and barbershops, and lets an admin browse **all** appointments
+  (paginated — see the subscription/appointments bullets below). curl/Postman is no
+  longer required for any of this.
 - `dto/pix/` and `service/pix/` are Pix QR-code generation for appointment payments —
   present in the working tree as uncommitted changes I didn't author; treat as existing
   code, not something to redo.
 - Every barber (owner or team member) needs an **active subscription** (R$30/month,
   paid via Pix to the developer's own personal key — `subscription.pix-key`) to use any
-  write endpoint on services/products/availability/blocked-clients/appointments/shop
-  settings, and clients can't book a barber whose subscription lapsed. `SubscriptionService.assertActive(barberId)`
-  is the one-line guard called at the top of each gated method (same pattern as
-  `assertOwner`); it throws `SubscriptionRequiredException` → HTTP 402. Status is
-  *computed live* from `SubscriptionPayment` history (`ACTIVE` / `PENDING_CONFIRMATION` /
-  `INACTIVE`) — there's no scheduled expiry job, and paying again does not stack, it
-  restarts a fresh 30-day window from confirmation. `GET/POST /api/subscriptions/me[/pix]`
-  are barber-facing; confirming a payment is another curl/Postman-only admin action
-  (`GET/PATCH /api/admin/subscription-payments[/{id}]`), exactly like barbershop-request
-  approval.
+  write endpoint on services/products/availability/blocked-clients/shop settings, to
+  view or act on their own appointments, and clients can't book a barber whose
+  subscription lapsed. `SubscriptionService.assertActive(barberId)` is the one-line
+  guard called at the top of each gated method (same pattern as `assertOwner`); it
+  throws `SubscriptionRequiredException` → HTTP 402. This now also covers
+  `AppointmentServiceImpl.getAppointmentsForUser()` (BARBER role only — CLIENT/ADMIN
+  are never gated) and `cancelAppointment()` when the **barber** is the one cancelling
+  (a client cancelling their own booking is never blocked by the barber's subscription
+  state) — an overdue barber can't see or act on their schedule at all, not just the
+  management screens. Status is *computed live* from `SubscriptionPayment` history
+  (`ACTIVE` / `PENDING_CONFIRMATION` / `INACTIVE`) — there's no scheduled expiry job,
+  and paying again does not stack, it restarts a fresh 30-day window from confirmation.
+  `GET/POST /api/subscriptions/me[/pix]` are barber-facing; confirming a payment is an
+  admin action (`GET/PATCH /api/admin/subscription-payments[/{id}]`, same as
+  barbershop-request approval) exposed in `components/AdminHome.tsx` — no longer
+  curl/Postman-only.
+- **Notification system**: `NotificationType` (`model/enums/NotificationType.java`)
+  covers `APPOINTMENT_REQUESTED/CONFIRMED/CANCELLED`,
+  `BARBERSHOP_REQUEST[_DECIDED]`, `SUBSCRIPTION_PAYMENT_PENDING`/`_DECIDED`, and
+  `JOIN_REQUEST[_DECIDED]`. Any service that creates one of these situations must
+  call `NotificationService.notify(recipientId, type, message, appointmentOrNull)`
+  itself — there's no event bus, it's an explicit call at the call site (see
+  `BarberShopServiceImpl.requestCreation()`, `AdminServiceImpl.decideRequest()`,
+  `SubscriptionServiceImpl.requestPixCharge()`/`decidePayment()`,
+  `JoinRequestServiceImpl.requestToJoin()`/`decideRequest()` for the pattern). Adding
+  a new "X happened, Y needs to know" flow means adding a `NotificationType` value
+  *and* remembering the `notify()` call — it's easy to build the feature and forget
+  the notification (this happened at least twice already: barbershop requests and
+  join requests both shipped without it originally). On mobile, tapping a
+  notification in `components/NotificationPanel.tsx` marks it read and navigates via
+  the static `NOTIFICATION_ROUTES` map in that file — a new `NotificationType` needs
+  an entry there too, or it's a dead-end tap.
 
 ## Mobile conventions
 
@@ -81,9 +127,18 @@ mobile/                 Expo Router app (TypeScript), see mobile/README.md
 - The real exported crest is `mobile/assets/your_barber_logo.png`, rendered via
   `components/Logo.tsx` (an `Image`, sized by its real 1373×1146 aspect ratio). Do not
   reintroduce the old hand-built `react-native-svg` recreation — it was replaced.
-- The confirm-code screen (`app/(auth)/confirm-code.tsx`) is intentionally a UI-only
-  mock — there is no verify-email endpoint on the backend. Don't wire it to an API
-  without adding that endpoint first.
+- The confirm-code screen (`app/(auth)/confirm-code.tsx`) is **real**, not a mock —
+  `POST /api/auth/verify-email` / `/resend-code` exist and it calls them
+  (`AuthServiceImpl`). That said, nothing server-side actually *requires*
+  verification: `login()` and `SecurityConfig` never check `emailVerified`, so an
+  unverified account can already use every authenticated endpoint — the screen is
+  just a client-side gate in the registration navigation stack, not a real security
+  boundary. For local testing with a fake address (`dev+x@example.com` etc.), set
+  `VERIFICATION_LOG_CODE_ON_FAILURE=true` in `.env`
+  (`MailServiceImpl.sendVerificationCode`) and the 6-digit code prints to the
+  `./gradlew bootRun` console — real SMTP creds won't throw for an undeliverable
+  address (it just bounces later), so this logs the code unconditionally rather than
+  only on a caught send failure. Never enable it where logs are shared (prod/staging).
 - Profile identity (name / phone / avatar) for **all** roles goes through
   `PUT /api/users/me` (`lib/api/users.ts`); `avatarBase64` is a downscaled 256px
   JPEG string (`lib/avatar.ts`). Barber-only fields (pixKey, delayTolerance,
@@ -102,6 +157,15 @@ mobile/                 Expo Router app (TypeScript), see mobile/README.md
   `PATCH /api/barbers/{id}/availability`.
 - `POST /api/pix/preview` (backend, uncommitted third-party code) still exists but
   has no mobile UI — the QR sandbox screen was removed after validation.
+- `app/(app)/appointments.tsx` is shared by all three roles but branches hard on
+  `session.role === 'ADMIN'`: admin gets `GET /api/admin/appointments?page=&size=`
+  (`lib/api/admin.ts#listAdminAppointments`, 20/page, sorted `scheduledAt desc`) with
+  a "Carregar mais" footer + `onEndReached`, no upcoming/history segment (doesn't
+  compose with pages), and no cancel/block actions (those never worked for admin
+  anyway — `cancelAppointment`'s `isParticipant` check always rejected admin
+  requesters, the button just used to render regardless). CLIENT/BARBER still use the
+  original unpaginated `listAppointments()` — don't paginate that path too, it's not
+  needed and would change the segment-filter UX for no reason.
 
 ## Gotchas learned the hard way
 
@@ -148,6 +212,18 @@ mobile/                 Expo Router app (TypeScript), see mobile/README.md
    class-level `@Transactional`; new services that touch entity graphs must be too.
    `GlobalExceptionHandler` now has an `Exception.class` catch-all that logs the
    stack trace, so genuine 500s show up in the backend console.
+10. **No migration anywhere declares `ON DELETE CASCADE`.** Every FK in
+    `db/migration/` is default `NO ACTION`. Deleting a row that anything still points
+    to throws a raw `DataIntegrityViolationException` (surfaces as a 500). Hibernate's
+    `cascade = CascadeType.ALL, orphanRemoval = true` on `BarberShop.services`/
+    `.products` handles those two, but everything else — `Barber.barberShop` (users
+    table), `JoinRequest.barberShop`, `Appointment.client`/`.barber`,
+    `Notification.recipient`/`.appointment`, `PushSubscription.user`,
+    `ClientBlock.client` — has to be nulled/deleted manually, in dependency order,
+    before the parent goes. `AdminServiceImpl.deleteClient()`/`deleteBarberShop()` are
+    the reference implementations; copy their ordering (detach/delete children first,
+    including notifications that reference a doomed row's `appointment_id`) for any
+    new delete endpoint rather than rediscovering the FK graph from a 500 stack trace.
 
 ## Verifying changes
 
