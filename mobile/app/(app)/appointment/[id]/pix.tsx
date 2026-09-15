@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '../../../../components/Button';
@@ -11,12 +11,105 @@ import { ApiError } from '../../../../lib/api';
 import { getPixQrCode } from '../../../../lib/api/pix';
 import { formatCurrency } from '../../../../lib/format';
 import type { PixQrCodeResponse } from '../../../../lib/types';
-import { colors } from '../../../../theme/colors';
 import { centeredPage } from '../../../../theme/layout';
 import { radius, spacing } from '../../../../theme/spacing';
+import { useThemeColors } from '../../../../theme/ThemeContext';
 import { typography } from '../../../../theme/typography';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 
 export default function PixScreen() {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    loading: {
+      flex: 1,
+    },
+    errorWrap: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.md,
+      padding: spacing.lg,
+      ...centeredPage,
+    },
+    errorText: {
+      color: colors.textMuted,
+      textAlign: 'center',
+      fontSize: 14,
+    },
+    content: {
+      padding: spacing.lg,
+      alignItems: 'center',
+      ...centeredPage,
+    },
+    title: {
+      ...typography.h1,
+      color: colors.black,
+    },
+    amount: {
+      fontFamily: typography.h1.fontFamily,
+      fontSize: 32,
+      color: colors.blue,
+      marginTop: spacing.xs,
+      marginBottom: spacing.lg,
+    },
+    qrCard: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: spacing.md,
+      marginBottom: spacing.lg,
+    },
+    qr: {
+      width: 220,
+      height: 220,
+    },
+    label: {
+      ...typography.label,
+      color: colors.textMuted,
+      alignSelf: 'flex-start',
+      marginBottom: spacing.xs,
+    },
+    copyBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: colors.pill,
+      borderRadius: radius.card,
+      padding: spacing.md,
+      width: '100%',
+      gap: spacing.sm,
+    },
+    copyText: {
+      flex: 1,
+      fontSize: 12,
+      color: colors.black,
+    },
+    copiedHint: {
+      color: colors.success,
+      fontSize: 12,
+      marginTop: 4,
+      alignSelf: 'flex-start',
+    },
+    merchantCard: {
+      width: '100%',
+      marginTop: spacing.lg,
+      gap: 4,
+    },
+    merchantRow: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    footer: {
+      padding: spacing.lg,
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+      backgroundColor: colors.surface,
+      ...centeredPage,
+    },
+  }));
   const { id } = useLocalSearchParams<{ id: string }>();
   const appointmentId = Number(id);
 
@@ -119,95 +212,3 @@ export default function PixScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  loading: {
-    flex: 1,
-  },
-  errorWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.md,
-    padding: spacing.lg,
-    ...centeredPage,
-  },
-  errorText: {
-    color: colors.textMuted,
-    textAlign: 'center',
-    fontSize: 14,
-  },
-  content: {
-    padding: spacing.lg,
-    alignItems: 'center',
-    ...centeredPage,
-  },
-  title: {
-    ...typography.h1,
-    color: colors.black,
-  },
-  amount: {
-    fontFamily: typography.h1.fontFamily,
-    fontSize: 32,
-    color: colors.blue,
-    marginTop: spacing.xs,
-    marginBottom: spacing.lg,
-  },
-  qrCard: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  qr: {
-    width: 220,
-    height: 220,
-  },
-  label: {
-    ...typography.label,
-    color: colors.textMuted,
-    alignSelf: 'flex-start',
-    marginBottom: spacing.xs,
-  },
-  copyBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.pill,
-    borderRadius: radius.card,
-    padding: spacing.md,
-    width: '100%',
-    gap: spacing.sm,
-  },
-  copyText: {
-    flex: 1,
-    fontSize: 12,
-    color: colors.black,
-  },
-  copiedHint: {
-    color: colors.success,
-    fontSize: 12,
-    marginTop: 4,
-    alignSelf: 'flex-start',
-  },
-  merchantCard: {
-    width: '100%',
-    marginTop: spacing.lg,
-    gap: 4,
-  },
-  merchantRow: {
-    fontSize: 13,
-    color: colors.textMuted,
-  },
-  footer: {
-    padding: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-    backgroundColor: colors.surface,
-    ...centeredPage,
-  },
-});

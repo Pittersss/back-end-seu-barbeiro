@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { colors } from '../theme/colors';
+import { useThemeColors } from '../theme/ThemeContext';
 import { fonts, typography } from '../theme/typography';
 import { radius, spacing } from '../theme/spacing';
+import { useThemedStyles } from '../theme/useThemedStyles';
 
 interface CalendarProps {
   value: Date;
@@ -39,6 +40,81 @@ function sameDay(a: Date, b: Date): boolean {
  * target, so scheduling UI can't rely on it.
  */
 export function Calendar({ value, onChange, minDate, isDayDisabled }: CalendarProps) {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    wrap: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: spacing.md,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing.sm,
+    },
+    navBtn: {
+      width: 32,
+      height: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    monthLabel: {
+      ...typography.h3,
+      color: colors.black,
+    },
+    weekRow: {
+      flexDirection: 'row',
+    },
+    weekday: {
+      flex: 1,
+      textAlign: 'center',
+      ...typography.caption,
+      color: colors.textFaint,
+      textTransform: 'uppercase',
+      marginBottom: 4,
+    },
+    grid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+    },
+    cell: {
+      width: `${100 / 7}%`,
+      aspectRatio: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 2,
+    },
+    day: {
+      width: '100%',
+      height: '100%',
+      maxWidth: 40,
+      maxHeight: 40,
+      borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    daySelected: {
+      backgroundColor: colors.black,
+    },
+    dayToday: {
+      borderWidth: 1.5,
+      borderColor: colors.pillBorder,
+    },
+    dayText: {
+      fontFamily: fonts.headingMedium,
+      fontSize: 14,
+      color: colors.black,
+    },
+    dayTextSelected: {
+      color: colors.white,
+    },
+    dayTextDisabled: {
+      color: colors.textFaint,
+    },
+  }));
   const floor = useMemo(() => startOfDay(minDate ?? new Date()), [minDate]);
   const [viewMonth, setViewMonth] = useState(
     () => new Date(value.getFullYear(), value.getMonth(), 1),
@@ -136,78 +212,3 @@ export function Calendar({ value, onChange, minDate, isDayDisabled }: CalendarPr
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: spacing.md,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.sm,
-  },
-  navBtn: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  monthLabel: {
-    ...typography.h3,
-    color: colors.black,
-  },
-  weekRow: {
-    flexDirection: 'row',
-  },
-  weekday: {
-    flex: 1,
-    textAlign: 'center',
-    ...typography.caption,
-    color: colors.textFaint,
-    textTransform: 'uppercase',
-    marginBottom: 4,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  cell: {
-    width: `${100 / 7}%`,
-    aspectRatio: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 2,
-  },
-  day: {
-    width: '100%',
-    height: '100%',
-    maxWidth: 40,
-    maxHeight: 40,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  daySelected: {
-    backgroundColor: colors.black,
-  },
-  dayToday: {
-    borderWidth: 1.5,
-    borderColor: colors.pillBorder,
-  },
-  dayText: {
-    fontFamily: fonts.headingMedium,
-    fontSize: 14,
-    color: colors.black,
-  },
-  dayTextSelected: {
-    color: colors.white,
-  },
-  dayTextDisabled: {
-    color: colors.textFaint,
-  },
-});

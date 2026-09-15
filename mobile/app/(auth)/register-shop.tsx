@@ -1,17 +1,44 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { Screen } from '../../components/Screen';
 import { requestBarberShopCreation } from '../../lib/api/barbershops';
 import { ApiError } from '../../lib/api';
-import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 export default function RegisterShopScreen() {
+  const styles = useThemedStyles((colors) => ({
+    title: {
+      ...typography.h1,
+      textAlign: 'center',
+      color: colors.black,
+      marginBottom: spacing.lg,
+    },
+    subtitle: {
+      fontSize: 15,
+      color: colors.black,
+      textAlign: 'center',
+      marginBottom: spacing.lg,
+    },
+    error: {
+      color: colors.red,
+      marginBottom: spacing.md,
+      textAlign: 'center',
+    },
+    skipWrap: {
+      marginTop: spacing.lg,
+      alignItems: 'center',
+    },
+    skipText: {
+      color: colors.textMuted,
+      textDecorationLine: 'underline',
+    },
+  }));
   const [shopName, setShopName] = useState('');
   const [shopAddress, setShopAddress] = useState('');
   const [shopPhone, setShopPhone] = useState('');
@@ -71,31 +98,3 @@ export default function RegisterShopScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  title: {
-    ...typography.h1,
-    textAlign: 'center',
-    color: colors.black,
-    marginBottom: spacing.lg,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: colors.black,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
-  },
-  error: {
-    color: colors.red,
-    marginBottom: spacing.md,
-    textAlign: 'center',
-  },
-  skipWrap: {
-    marginTop: spacing.lg,
-    alignItems: 'center',
-  },
-  skipText: {
-    color: colors.textMuted,
-    textDecorationLine: 'underline',
-  },
-});

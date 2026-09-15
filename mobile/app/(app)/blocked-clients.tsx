@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '../../components/Avatar';
@@ -12,12 +12,81 @@ import { ApiError } from '../../lib/api';
 import { listBlockedClients, unblockClient } from '../../lib/api/barbers';
 import { formatDate } from '../../lib/format';
 import type { BlockedClient } from '../../lib/types';
-import { colors } from '../../theme/colors';
 import { centeredPage } from '../../theme/layout';
 import { spacing } from '../../theme/spacing';
+import { useThemeColors } from '../../theme/ThemeContext';
 import { typography } from '../../theme/typography';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 export default function BlockedClientsScreen() {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    loading: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      ...centeredPage,
+    },
+    headerTitle: {
+      ...typography.h2,
+      color: colors.black,
+    },
+    content: {
+      padding: spacing.lg,
+      paddingBottom: spacing.xxl,
+      ...centeredPage,
+    },
+    error: {
+      color: colors.red,
+      textAlign: 'center',
+      marginBottom: spacing.sm,
+    },
+    empty: {
+      alignItems: 'center',
+      gap: spacing.md,
+      marginTop: spacing.xxl,
+      paddingHorizontal: spacing.lg,
+    },
+    emptyText: {
+      color: colors.textMuted,
+      textAlign: 'center',
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      marginBottom: spacing.sm,
+    },
+    info: {
+      flex: 1,
+    },
+    name: {
+      fontSize: 15,
+      color: colors.black,
+      fontWeight: '600',
+    },
+    meta: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    action: {
+      color: colors.blue,
+      fontSize: 13,
+      fontWeight: '600',
+    },
+  }));
   const { session } = useAuth();
   const barberId = session?.userId;
 
@@ -119,71 +188,3 @@ export default function BlockedClientsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  loading: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    ...centeredPage,
-  },
-  headerTitle: {
-    ...typography.h2,
-    color: colors.black,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-    ...centeredPage,
-  },
-  error: {
-    color: colors.red,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  empty: {
-    alignItems: 'center',
-    gap: spacing.md,
-    marginTop: spacing.xxl,
-    paddingHorizontal: spacing.lg,
-  },
-  emptyText: {
-    color: colors.textMuted,
-    textAlign: 'center',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  info: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 15,
-    color: colors.black,
-    fontWeight: '600',
-  },
-  meta: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  action: {
-    color: colors.blue,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-});

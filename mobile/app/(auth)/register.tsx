@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
@@ -9,9 +9,9 @@ import { Logo } from '../../components/Logo';
 import { Screen } from '../../components/Screen';
 import { useAuth } from '../../context/AuthContext';
 import { ApiError } from '../../lib/api';
-import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 type RoleParam = 'CLIENT' | 'BARBER' | 'OWNER';
 
@@ -22,6 +22,32 @@ const ROLE_LABELS: Record<RoleParam, string> = {
 };
 
 export default function RegisterScreen() {
+  const styles = useThemedStyles((colors) => ({
+    hero: {
+      alignItems: 'center',
+      marginBottom: spacing.lg,
+    },
+    title: {
+      ...typography.display,
+      textAlign: 'center',
+      color: colors.black,
+      marginTop: spacing.md,
+    },
+    subtitle: {
+      ...typography.bodyMuted,
+      textAlign: 'center',
+      color: colors.textMuted,
+      marginTop: spacing.xs,
+    },
+    card: {
+      padding: spacing.lg,
+    },
+    error: {
+      color: colors.red,
+      marginBottom: spacing.md,
+      textAlign: 'center',
+    },
+  }));
   const { role } = useLocalSearchParams<{ role: RoleParam }>();
   const { registerClient, registerBarber } = useAuth();
   const isBarberLike = role === 'BARBER' || role === 'OWNER';
@@ -142,30 +168,3 @@ export default function RegisterScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  hero: {
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  title: {
-    ...typography.display,
-    textAlign: 'center',
-    color: colors.black,
-    marginTop: spacing.md,
-  },
-  subtitle: {
-    ...typography.bodyMuted,
-    textAlign: 'center',
-    color: colors.textMuted,
-    marginTop: spacing.xs,
-  },
-  card: {
-    padding: spacing.lg,
-  },
-  error: {
-    color: colors.red,
-    marginBottom: spacing.md,
-    textAlign: 'center',
-  },
-});

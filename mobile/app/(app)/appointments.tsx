@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '../../components/Avatar';
@@ -18,10 +18,11 @@ import { cancelAppointment, listAppointments, updateAppointmentStatus } from '..
 import { blockClient, listBlockedClients } from '../../lib/api/barbers';
 import { formatDate, formatTime } from '../../lib/format';
 import type { Appointment } from '../../lib/types';
-import { colors } from '../../theme/colors';
 import { centeredPage } from '../../theme/layout';
 import { radius, spacing } from '../../theme/spacing';
+import { useThemeColors } from '../../theme/ThemeContext';
 import { typography } from '../../theme/typography';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 type Filter = 'upcoming' | 'history';
 type PendingAction = { type: 'cancel' | 'block'; appointment: Appointment };
@@ -31,6 +32,114 @@ const PAYMENT_LABELS: Record<string, string> = { PIX: 'Pix', CARD: 'Cartão', CA
 const ADMIN_PAGE_SIZE = 20;
 
 export default function AppointmentsScreen() {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    header: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.sm,
+      ...centeredPage,
+    },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    title: {
+      ...typography.display,
+      color: colors.black,
+    },
+    segment: {
+      flexDirection: 'row',
+      backgroundColor: colors.pill,
+      borderRadius: radius.pill,
+      padding: 3,
+      marginTop: spacing.md,
+    },
+    segmentItem: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: spacing.sm,
+      borderRadius: radius.pill,
+    },
+    segmentItemActive: {
+      backgroundColor: colors.surface,
+    },
+    segmentText: {
+      ...typography.label,
+      color: colors.textMuted,
+    },
+    segmentTextActive: {
+      color: colors.black,
+    },
+    error: {
+      color: colors.red,
+      marginTop: spacing.sm,
+      fontSize: 13,
+    },
+    list: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.md,
+      paddingBottom: spacing.xl,
+      gap: spacing.md,
+      ...centeredPage,
+    },
+    empty: {
+      textAlign: 'center',
+      color: colors.textMuted,
+      marginTop: spacing.xl,
+    },
+    card: {
+      padding: spacing.md,
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: spacing.sm,
+    },
+    serviceName: {
+      fontFamily: typography.h2.fontFamily,
+      fontSize: 16,
+      color: colors.black,
+      flex: 1,
+      marginRight: spacing.sm,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginTop: 4,
+    },
+    meta: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    actionsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.md,
+      marginTop: spacing.md,
+    },
+    linkAction: {
+      color: colors.blue,
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    dangerAction: {
+      color: colors.red,
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    loadMoreButton: {
+      marginTop: spacing.sm,
+      marginBottom: spacing.xl,
+    },
+  }));
   const { session } = useAuth();
   const { refresh: refreshNotifications } = useNotifications();
   const isBarber = session?.role === 'BARBER';
@@ -290,111 +399,3 @@ export default function AppointmentsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  header: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.sm,
-    ...centeredPage,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  title: {
-    ...typography.display,
-    color: colors.black,
-  },
-  segment: {
-    flexDirection: 'row',
-    backgroundColor: colors.pill,
-    borderRadius: radius.pill,
-    padding: 3,
-    marginTop: spacing.md,
-  },
-  segmentItem: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
-  },
-  segmentItemActive: {
-    backgroundColor: colors.surface,
-  },
-  segmentText: {
-    ...typography.label,
-    color: colors.textMuted,
-  },
-  segmentTextActive: {
-    color: colors.black,
-  },
-  error: {
-    color: colors.red,
-    marginTop: spacing.sm,
-    fontSize: 13,
-  },
-  list: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
-    gap: spacing.md,
-    ...centeredPage,
-  },
-  empty: {
-    textAlign: 'center',
-    color: colors.textMuted,
-    marginTop: spacing.xl,
-  },
-  card: {
-    padding: spacing.md,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.sm,
-  },
-  serviceName: {
-    fontFamily: typography.h2.fontFamily,
-    fontSize: 16,
-    color: colors.black,
-    flex: 1,
-    marginRight: spacing.sm,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 4,
-  },
-  meta: {
-    fontSize: 13,
-    color: colors.textMuted,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-    marginTop: spacing.md,
-  },
-  linkAction: {
-    color: colors.blue,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  dangerAction: {
-    color: colors.red,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  loadMoreButton: {
-    marginTop: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-});

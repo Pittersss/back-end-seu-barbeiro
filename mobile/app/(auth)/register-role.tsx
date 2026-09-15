@@ -1,14 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { Button } from '../../components/Button';
 import { Logo } from '../../components/Logo';
 import { Screen } from '../../components/Screen';
-import { colors } from '../../theme/colors';
+import { useThemeColors } from '../../theme/ThemeContext';
 import { radius, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 type RoleOption = 'CLIENT' | 'BARBER' | 'OWNER';
 
@@ -19,6 +20,91 @@ const OPTIONS: { value: RoleOption; label: string; hint: string; icon: keyof typ
 ];
 
 export default function RegisterRoleScreen() {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    hero: {
+      alignItems: 'center',
+      marginBottom: spacing.xl,
+    },
+    title: {
+      ...typography.display,
+      textAlign: 'center',
+      color: colors.black,
+      marginTop: spacing.md,
+    },
+    subtitle: {
+      ...typography.bodyMuted,
+      color: colors.textMuted,
+      textAlign: 'center',
+      marginTop: spacing.xs,
+    },
+    options: {
+      gap: spacing.sm,
+      marginBottom: spacing.xl,
+    },
+    option: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      backgroundColor: colors.surface,
+      borderRadius: radius.card,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      padding: spacing.md,
+    },
+    optionSelected: {
+      borderColor: colors.blue,
+      backgroundColor: colors.blueSoft,
+    },
+    optionPressed: {
+      opacity: 0.9,
+      transform: [{ scale: 0.99 }],
+    },
+    optionIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.surfaceAlt,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    optionIconSelected: {
+      backgroundColor: colors.surface,
+    },
+    optionText: {
+      flex: 1,
+    },
+    optionLabel: {
+      ...typography.h3,
+      color: colors.black,
+    },
+    optionHint: {
+      ...typography.caption,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    radio: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 1.5,
+      borderColor: colors.pillBorder,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    radioSelected: {
+      borderColor: colors.blue,
+    },
+    radioDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: colors.blue,
+    },
+    button: {
+      alignSelf: 'stretch',
+    },
+  }));
   const [selected, setSelected] = useState<RoleOption | null>(null);
 
   return (
@@ -72,88 +158,3 @@ export default function RegisterRoleScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  hero: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  title: {
-    ...typography.display,
-    textAlign: 'center',
-    color: colors.black,
-    marginTop: spacing.md,
-  },
-  subtitle: {
-    ...typography.bodyMuted,
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginTop: spacing.xs,
-  },
-  options: {
-    gap: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    padding: spacing.md,
-  },
-  optionSelected: {
-    borderColor: colors.blue,
-    backgroundColor: colors.blueSoft,
-  },
-  optionPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.99 }],
-  },
-  optionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceAlt,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  optionIconSelected: {
-    backgroundColor: colors.surface,
-  },
-  optionText: {
-    flex: 1,
-  },
-  optionLabel: {
-    ...typography.h3,
-    color: colors.black,
-  },
-  optionHint: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  radio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: colors.pillBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioSelected: {
-    borderColor: colors.blue,
-  },
-  radioDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.blue,
-  },
-  button: {
-    alignSelf: 'stretch',
-  },
-});

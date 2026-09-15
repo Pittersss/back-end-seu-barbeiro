@@ -1,15 +1,28 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
-import { colors } from '../../theme/colors';
+import { useThemeColors } from '../../theme/ThemeContext';
 import { fonts } from '../../theme/typography';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 export default function AppLayout() {
   const { session, isLoading } = useAuth();
   const { unreadCount } = useNotifications();
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    tabDot: {
+      position: 'absolute',
+      top: -2,
+      right: -6,
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.danger,
+    },
+  }));
 
   if (isLoading) {
     return null;
@@ -78,15 +91,3 @@ export default function AppLayout() {
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  tabDot: {
-    position: 'absolute',
-    top: -2,
-    right: -6,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.danger,
-  },
-});

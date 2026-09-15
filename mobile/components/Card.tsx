@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { colors } from '../theme/colors';
 import { shadows } from '../theme/shadows';
 import { radius, spacing } from '../theme/spacing';
+import { useThemedStyles } from '../theme/useThemedStyles';
 
 interface CardProps {
   children: ReactNode;
@@ -14,6 +14,17 @@ interface CardProps {
 }
 
 export function Card({ children, style, padded = true, variant = 'elevated' }: CardProps) {
+  const styles = useThemedStyles((colors) => ({
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    padded: {
+      padding: spacing.md + 2,
+    },
+  }));
   return (
     <View
       style={[
@@ -27,15 +38,3 @@ export function Card({ children, style, padded = true, variant = 'elevated' }: C
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  padded: {
-    padding: spacing.md + 2,
-  },
-});

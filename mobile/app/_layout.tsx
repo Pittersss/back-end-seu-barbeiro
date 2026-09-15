@@ -7,7 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider } from '../context/AuthContext';
 import { NotificationProvider } from '../context/NotificationContext';
-import { colors } from '../theme/colors';
+import { ThemeProvider, useTheme } from '../theme/ThemeContext';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -29,17 +29,28 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <NotificationProvider>
-          <StatusBar style="dark" />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: colors.bg },
-            }}
-          />
-        </NotificationProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <RootNavigator />
+          </NotificationProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
+  );
+}
+
+function RootNavigator() {
+  const { colors, isDark } = useTheme();
+  return (
+    <>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.bg },
+        }}
+      />
+    </>
   );
 }

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '../../components/Avatar';
@@ -16,10 +16,11 @@ import { getBarberShop, updateBarberShop } from '../../lib/api/barbershops';
 import { getMe, updateMe } from '../../lib/api/users';
 import { pickAvatarBase64 } from '../../lib/avatar';
 import type { Barber, BarberShop, UserProfile } from '../../lib/types';
-import { colors } from '../../theme/colors';
 import { centeredPage } from '../../theme/layout';
 import { spacing } from '../../theme/spacing';
+import { useTheme } from '../../theme/ThemeContext';
 import { typography } from '../../theme/typography';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 const ROLE_LABELS: Record<string, string> = {
   BARBER: 'Barbeiro',
@@ -29,6 +30,96 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default function ProfileScreen() {
   const { session, logout, refreshProfile } = useAuth();
+  const { colors, isDark, toggleScheme } = useTheme();
+  const styles = useThemedStyles((colors) => ({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    loading: {
+      flex: 1,
+    },
+    content: {
+      padding: spacing.lg,
+      paddingBottom: spacing.xxl,
+      ...centeredPage,
+    },
+    title: {
+      ...typography.display,
+      color: colors.black,
+      marginBottom: spacing.lg,
+    },
+    identity: {
+      alignItems: 'center',
+      marginBottom: spacing.sm,
+    },
+    avatarWrap: {
+      marginBottom: spacing.sm,
+    },
+    shopPhotoWrap: {
+      alignSelf: 'center',
+      marginBottom: spacing.md,
+    },
+    avatarBadge: {
+      position: 'absolute',
+      right: -2,
+      bottom: -2,
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: colors.blue,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 2,
+      borderColor: colors.white,
+    },
+    name: {
+      fontFamily: typography.h2.fontFamily,
+      fontSize: 18,
+      color: colors.black,
+    },
+    role: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    error: {
+      color: colors.red,
+      textAlign: 'center',
+      marginTop: spacing.md,
+    },
+    saved: {
+      color: colors.success,
+      textAlign: 'center',
+      marginTop: spacing.md,
+    },
+    navRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      padding: spacing.md,
+    },
+    navText: {
+      flex: 1,
+    },
+    navTitle: {
+      fontSize: 15,
+      color: colors.black,
+    },
+    navHint: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    navDivider: {
+      height: 1,
+      backgroundColor: colors.line,
+      marginLeft: spacing.md + 20 + spacing.md,
+    },
+    logoutButton: {
+      marginTop: spacing.xl,
+    },
+  }));
   const isBarber = session?.role === 'BARBER';
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -229,9 +320,9 @@ export default function ProfileScreen() {
             />
             <View style={styles.avatarBadge}>
               {avatarBusy ? (
-                <ActivityIndicator size="small" color={colors.white} />
+                <ActivityIndicator size="small" color={colors.onAccent} />
               ) : (
-                <Ionicons name="camera" size={15} color={colors.white} />
+                <Ionicons name="camera" size={15} color={colors.onAccent} />
               )}
             </View>
           </Pressable>
@@ -330,9 +421,9 @@ export default function ProfileScreen() {
                 <Avatar name={shop?.name} avatarBase64={shop?.photoBase64} size={72} tone="black" />
                 <View style={styles.avatarBadge}>
                   {shopPhotoBusy ? (
-                    <ActivityIndicator size="small" color={colors.white} />
+                    <ActivityIndicator size="small" color={colors.onAccent} />
                   ) : (
-                    <Ionicons name="camera" size={15} color={colors.white} />
+                    <Ionicons name="camera" size={15} color={colors.onAccent} />
                   )}
                 </View>
               </Pressable>
@@ -369,98 +460,24 @@ export default function ProfileScreen() {
           </>
         ) : null}
 
+        <SectionHeader title="Preferências" />
+        <Card padded={false}>
+          <View style={styles.navRow}>
+            <Ionicons name="moon-outline" size={20} color={colors.black} />
+            <View style={styles.navText}>
+              <Text style={styles.navTitle}>Modo escuro</Text>
+              <Text style={styles.navHint}>Deixa as telas com fundo escuro</Text>
+            </View>
+            <Switch
+              value={isDark}
+              onValueChange={toggleScheme}
+              trackColor={{ false: colors.pillBorder, true: colors.blue }}
+            />
+          </View>
+        </Card>
+
         <Button title="Sair" variant="outline" onPress={logout} style={styles.logoutButton} />
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  loading: {
-    flex: 1,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-    ...centeredPage,
-  },
-  title: {
-    ...typography.display,
-    color: colors.black,
-    marginBottom: spacing.lg,
-  },
-  identity: {
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  avatarWrap: {
-    marginBottom: spacing.sm,
-  },
-  shopPhotoWrap: {
-    alignSelf: 'center',
-    marginBottom: spacing.md,
-  },
-  avatarBadge: {
-    position: 'absolute',
-    right: -2,
-    bottom: -2,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: colors.blue,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: colors.white,
-  },
-  name: {
-    fontFamily: typography.h2.fontFamily,
-    fontSize: 18,
-    color: colors.black,
-  },
-  role: {
-    fontSize: 13,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  error: {
-    color: colors.red,
-    textAlign: 'center',
-    marginTop: spacing.md,
-  },
-  saved: {
-    color: colors.success,
-    textAlign: 'center',
-    marginTop: spacing.md,
-  },
-  navRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.md,
-  },
-  navText: {
-    flex: 1,
-  },
-  navTitle: {
-    fontSize: 15,
-    color: colors.black,
-  },
-  navHint: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  navDivider: {
-    height: 1,
-    backgroundColor: colors.line,
-    marginLeft: spacing.md + 20 + spacing.md,
-  },
-  logoutButton: {
-    marginTop: spacing.xl,
-  },
-});

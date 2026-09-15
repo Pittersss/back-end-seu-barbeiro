@@ -6,7 +6,6 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -16,12 +15,74 @@ import { Avatar } from '../../components/Avatar';
 import { Card } from '../../components/Card';
 import { listBarberShops } from '../../lib/api/barbershops';
 import type { BarberShop } from '../../lib/types';
-import { colors } from '../../theme/colors';
 import { centeredPage } from '../../theme/layout';
 import { spacing } from '../../theme/spacing';
+import { useThemeColors } from '../../theme/ThemeContext';
 import { typography } from '../../theme/typography';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 export default function JoinShopScreen() {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.white,
+    },
+    loading: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      ...centeredPage,
+    },
+    headerTitle: {
+      ...typography.h2,
+      color: colors.black,
+    },
+    list: {
+      padding: spacing.lg,
+      gap: spacing.md,
+      ...centeredPage,
+    },
+    empty: {
+      textAlign: 'center',
+      color: colors.textMuted,
+      marginTop: spacing.xl,
+    },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    cardPressed: {
+      opacity: 0.7,
+    },
+    cardIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: colors.blueSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: spacing.md,
+    },
+    cardBody: {
+      flex: 1,
+    },
+    cardTitle: {
+      fontFamily: typography.h2.fontFamily,
+      fontSize: 16,
+      color: colors.black,
+    },
+    cardSubtitle: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+  }));
   const [shops, setShops] = useState<BarberShop[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -93,64 +154,3 @@ export default function JoinShopScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
-  loading: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    ...centeredPage,
-  },
-  headerTitle: {
-    ...typography.h2,
-    color: colors.black,
-  },
-  list: {
-    padding: spacing.lg,
-    gap: spacing.md,
-    ...centeredPage,
-  },
-  empty: {
-    textAlign: 'center',
-    color: colors.textMuted,
-    marginTop: spacing.xl,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  cardPressed: {
-    opacity: 0.7,
-  },
-  cardIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.blueSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
-  },
-  cardBody: {
-    flex: 1,
-  },
-  cardTitle: {
-    fontFamily: typography.h2.fontFamily,
-    fontSize: 16,
-    color: colors.black,
-  },
-  cardSubtitle: {
-    fontSize: 13,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-});

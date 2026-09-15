@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
+import { useThemedStyles } from '../theme/useThemedStyles';
 
 interface SectionHeaderProps {
   title: string;
@@ -13,6 +13,27 @@ interface SectionHeaderProps {
 }
 
 export function SectionHeader({ title, caption, action, style }: SectionHeaderProps) {
+  const styles = useThemedStyles((colors) => ({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: spacing.lg,
+      marginBottom: spacing.sm,
+    },
+    textWrap: {
+      flex: 1,
+    },
+    title: {
+      ...typography.h3,
+      color: colors.black,
+    },
+    caption: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+  }));
   return (
     <View style={[styles.row, style]}>
       <View style={styles.textWrap}>
@@ -23,25 +44,3 @@ export function SectionHeader({ title, caption, action, style }: SectionHeaderPr
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
-  },
-  textWrap: {
-    flex: 1,
-  },
-  title: {
-    ...typography.h3,
-    color: colors.black,
-  },
-  caption: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-});

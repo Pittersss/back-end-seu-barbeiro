@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   RefreshControl,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -33,14 +32,98 @@ import type {
   SubscriptionPaymentResponse,
   UserProfile,
 } from '../lib/types';
-import { colors } from '../theme/colors';
 import { centeredPage } from '../theme/layout';
 import { spacing } from '../theme/spacing';
+import { useThemeColors } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
+import { useThemedStyles } from '../theme/useThemedStyles';
 
 type PendingDelete = { type: 'shop' | 'client'; id: number; label: string };
 
 export function AdminHome() {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.white,
+    },
+    loading: {
+      flex: 1,
+    },
+    content: {
+      padding: spacing.lg,
+      ...centeredPage,
+    },
+    greetingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      marginBottom: spacing.lg,
+    },
+    greeting: {
+      color: colors.textMuted,
+      fontSize: 14,
+    },
+    title: {
+      ...typography.h1,
+      color: colors.black,
+      marginTop: 2,
+    },
+    sectionTitle: {
+      ...typography.label,
+      color: colors.textMuted,
+      marginBottom: spacing.sm,
+      marginTop: spacing.md,
+    },
+    card: {
+      marginBottom: spacing.md,
+    },
+    emptyText: {
+      fontSize: 14,
+      color: colors.textMuted,
+    },
+    itemTitle: {
+      fontFamily: typography.h2.fontFamily,
+      fontSize: 16,
+      color: colors.black,
+    },
+    itemSubtitle: {
+      fontSize: 14,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    itemDetail: {
+      fontSize: 13,
+      color: colors.black,
+      marginTop: 2,
+    },
+    itemDate: {
+      fontSize: 12,
+      color: colors.textFaint,
+      marginTop: spacing.xs,
+    },
+    statusRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+    },
+    actionRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      marginTop: spacing.md,
+    },
+    actionButton: {
+      flex: 1,
+    },
+    deleteButton: {
+      borderColor: colors.danger,
+    },
+    error: {
+      color: colors.red,
+      textAlign: 'center',
+      marginTop: spacing.sm,
+    },
+  }));
   const { session } = useAuth();
   const [shopRequests, setShopRequests] = useState<BarberShopRequestResponse[]>([]);
   const [payments, setPayments] = useState<SubscriptionPaymentResponse[]>([]);
@@ -292,86 +375,3 @@ export function AdminHome() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
-  loading: {
-    flex: 1,
-  },
-  content: {
-    padding: spacing.lg,
-    ...centeredPage,
-  },
-  greetingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  greeting: {
-    color: colors.textMuted,
-    fontSize: 14,
-  },
-  title: {
-    ...typography.h1,
-    color: colors.black,
-    marginTop: 2,
-  },
-  sectionTitle: {
-    ...typography.label,
-    color: colors.textMuted,
-    marginBottom: spacing.sm,
-    marginTop: spacing.md,
-  },
-  card: {
-    marginBottom: spacing.md,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: colors.textMuted,
-  },
-  itemTitle: {
-    fontFamily: typography.h2.fontFamily,
-    fontSize: 16,
-    color: colors.black,
-  },
-  itemSubtitle: {
-    fontSize: 14,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  itemDetail: {
-    fontSize: 13,
-    color: colors.black,
-    marginTop: 2,
-  },
-  itemDate: {
-    fontSize: 12,
-    color: colors.textFaint,
-    marginTop: spacing.xs,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  actionButton: {
-    flex: 1,
-  },
-  deleteButton: {
-    borderColor: colors.danger,
-  },
-  error: {
-    color: colors.red,
-    textAlign: 'center',
-    marginTop: spacing.sm,
-  },
-});

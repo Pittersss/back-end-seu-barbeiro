@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '../../components/Button';
@@ -11,10 +11,11 @@ import { ApiError } from '../../lib/api';
 import { getSubscriptionStatus, requestSubscriptionPix } from '../../lib/api/subscriptions';
 import { formatCurrency } from '../../lib/format';
 import type { PixQrCodeResponse, SubscriptionStatus } from '../../lib/types';
-import { colors } from '../../theme/colors';
 import { centeredPage } from '../../theme/layout';
 import { radius, spacing } from '../../theme/spacing';
+import { useThemeColors } from '../../theme/ThemeContext';
 import { typography } from '../../theme/typography';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 /** `periodEnd` is a date-only string (`YYYY-MM-DD`); reformat it as text, no `Date` parsing
  * (parsing a date-only ISO string as UTC and rendering it in a negative-offset timezone like
@@ -25,6 +26,107 @@ function formatDateOnly(dateOnly: string): string {
 }
 
 export default function SubscriptionScreen() {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    loading: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      ...centeredPage,
+    },
+    headerTitle: {
+      ...typography.h2,
+      color: colors.black,
+    },
+    content: {
+      padding: spacing.lg,
+      paddingBottom: spacing.xxl,
+      alignItems: 'center',
+      ...centeredPage,
+    },
+    error: {
+      color: colors.red,
+      textAlign: 'center',
+      marginBottom: spacing.md,
+    },
+    statusCard: {
+      alignItems: 'center',
+      gap: spacing.sm,
+      padding: spacing.lg,
+      width: '100%',
+      marginBottom: spacing.lg,
+    },
+    statusTitle: {
+      ...typography.h2,
+      color: colors.black,
+    },
+    statusText: {
+      fontSize: 14,
+      color: colors.textMuted,
+      textAlign: 'center',
+    },
+    actionButton: {
+      marginTop: spacing.sm,
+      alignSelf: 'stretch',
+    },
+    title: {
+      ...typography.h1,
+      color: colors.black,
+    },
+    amount: {
+      fontFamily: typography.h1.fontFamily,
+      fontSize: 32,
+      color: colors.blue,
+      marginTop: spacing.xs,
+      marginBottom: spacing.lg,
+    },
+    qrCard: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: spacing.md,
+      marginBottom: spacing.lg,
+    },
+    qr: {
+      width: 220,
+      height: 220,
+    },
+    label: {
+      ...typography.label,
+      color: colors.textMuted,
+      alignSelf: 'flex-start',
+      marginBottom: spacing.xs,
+    },
+    copyBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: colors.pill,
+      borderRadius: radius.card,
+      padding: spacing.md,
+      width: '100%',
+      gap: spacing.sm,
+    },
+    copyText: {
+      flex: 1,
+      fontSize: 12,
+      color: colors.black,
+    },
+    copiedHint: {
+      color: colors.success,
+      fontSize: 12,
+      marginTop: 4,
+      alignSelf: 'flex-start',
+    },
+  }));
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
   const [periodEnd, setPeriodEnd] = useState<string | null>(null);
   const [pix, setPix] = useState<PixQrCodeResponse | null>(null);
@@ -166,104 +268,3 @@ export default function SubscriptionScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  loading: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    ...centeredPage,
-  },
-  headerTitle: {
-    ...typography.h2,
-    color: colors.black,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-    alignItems: 'center',
-    ...centeredPage,
-  },
-  error: {
-    color: colors.red,
-    textAlign: 'center',
-    marginBottom: spacing.md,
-  },
-  statusCard: {
-    alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.lg,
-    width: '100%',
-    marginBottom: spacing.lg,
-  },
-  statusTitle: {
-    ...typography.h2,
-    color: colors.black,
-  },
-  statusText: {
-    fontSize: 14,
-    color: colors.textMuted,
-    textAlign: 'center',
-  },
-  actionButton: {
-    marginTop: spacing.sm,
-    alignSelf: 'stretch',
-  },
-  title: {
-    ...typography.h1,
-    color: colors.black,
-  },
-  amount: {
-    fontFamily: typography.h1.fontFamily,
-    fontSize: 32,
-    color: colors.blue,
-    marginTop: spacing.xs,
-    marginBottom: spacing.lg,
-  },
-  qrCard: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  qr: {
-    width: 220,
-    height: 220,
-  },
-  label: {
-    ...typography.label,
-    color: colors.textMuted,
-    alignSelf: 'flex-start',
-    marginBottom: spacing.xs,
-  },
-  copyBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.pill,
-    borderRadius: radius.card,
-    padding: spacing.md,
-    width: '100%',
-    gap: spacing.sm,
-  },
-  copyText: {
-    flex: 1,
-    fontSize: 12,
-    color: colors.black,
-  },
-  copiedHint: {
-    color: colors.success,
-    fontSize: 12,
-    marginTop: 4,
-    alignSelf: 'flex-start',
-  },
-});

@@ -1,8 +1,8 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, Text, View } from 'react-native';
 
-import { colors } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
+import { useThemedStyles } from '../theme/useThemedStyles';
 import { Button } from './Button';
 
 interface ConfirmDialogProps {
@@ -32,6 +32,43 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const styles = useThemedStyles((colors) => ({
+    backdrop: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: spacing.lg,
+    },
+    card: {
+      width: '100%',
+      maxWidth: 360,
+      backgroundColor: colors.surface,
+      borderRadius: radius.card,
+      padding: spacing.lg,
+    },
+    title: {
+      ...typography.h2,
+      color: colors.black,
+    },
+    message: {
+      fontSize: 14,
+      color: colors.textMuted,
+      marginTop: spacing.sm,
+      lineHeight: 20,
+    },
+    actions: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      marginTop: spacing.lg,
+    },
+    action: {
+      flex: 1,
+    },
+    destructive: {
+      backgroundColor: colors.danger,
+    },
+  }));
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <Pressable style={styles.backdrop} onPress={loading ? undefined : onCancel}>
@@ -53,41 +90,3 @@ export function ConfirmDialog({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.lg,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 360,
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
-    padding: spacing.lg,
-  },
-  title: {
-    ...typography.h2,
-    color: colors.black,
-  },
-  message: {
-    fontSize: 14,
-    color: colors.textMuted,
-    marginTop: spacing.sm,
-    lineHeight: 20,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.lg,
-  },
-  action: {
-    flex: 1,
-  },
-  destructive: {
-    backgroundColor: colors.danger,
-  },
-});

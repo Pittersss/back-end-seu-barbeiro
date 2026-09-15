@@ -15,7 +15,14 @@ public final class PixBrCodeGenerator {
 
     private static final String GUI = "BR.GOV.BCB.PIX";
     private static final String PAYLOAD_FORMAT_INDICATOR = "01";
-    private static final String SINGLE_USE_INDICATOR = "12";
+
+    /**
+     * "11" marks a static QR (payload is fully self-contained, reusable). "12" would mean
+     * dynamic, which per the BR Code manual requires a URL in a 26.25 subfield the payer's app
+     * fetches for the real payment details — this generator never emits that URL, so declaring
+     * "12" made wallets treat the code as a malformed dynamic charge and reject it outright.
+     */
+    private static final String STATIC_INDICATOR = "11";
     private static final String MERCHANT_CATEGORY_CODE = "0000";
     private static final String TRANSACTION_CURRENCY_BRL = "986";
     private static final String COUNTRY_CODE = "BR";
@@ -41,7 +48,7 @@ public final class PixBrCodeGenerator {
 
         StringBuilder payload = new StringBuilder();
         payload.append(field("00", PAYLOAD_FORMAT_INDICATOR));
-        payload.append(field("01", SINGLE_USE_INDICATOR));
+        payload.append(field("01", STATIC_INDICATOR));
         payload.append(field("26", field("00", GUI) + field("01", pixKey.trim())));
         payload.append(field("52", MERCHANT_CATEGORY_CODE));
         payload.append(field("53", TRANSACTION_CURRENCY_BRL));

@@ -1,6 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
@@ -9,11 +10,67 @@ import { Logo } from '../../components/Logo';
 import { Screen } from '../../components/Screen';
 import { useAuth } from '../../context/AuthContext';
 import { ApiError } from '../../lib/api';
-import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
+import { radius, spacing } from '../../theme/spacing';
+import { useTheme } from '../../theme/ThemeContext';
 import { typography } from '../../theme/typography';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 export default function LoginScreen() {
+  const { colors, isDark, toggleScheme } = useTheme();
+  const styles = useThemedStyles((colors) => ({
+    hero: {
+      alignItems: 'center',
+      marginBottom: spacing.xl,
+    },
+    title: {
+      ...typography.display,
+      color: colors.black,
+      textAlign: 'center',
+      marginTop: spacing.lg,
+    },
+    subtitle: {
+      ...typography.bodyMuted,
+      color: colors.textMuted,
+      textAlign: 'center',
+      marginTop: spacing.xs,
+    },
+    card: {
+      alignSelf: 'stretch',
+      padding: spacing.lg,
+    },
+    error: {
+      color: colors.red,
+      marginBottom: spacing.md,
+      textAlign: 'center',
+    },
+    footer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginTop: spacing.xl,
+    },
+    footerText: {
+      color: colors.textMuted,
+    },
+    link: {
+      color: colors.blue,
+      fontWeight: '600',
+    },
+    themeToggle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 7,
+      borderRadius: radius.pill,
+      backgroundColor: colors.pill,
+      borderWidth: 1,
+      borderColor: colors.pillBorder,
+    },
+    themeToggleText: {
+      ...typography.caption,
+      color: colors.black,
+    },
+  }));
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,7 +91,15 @@ export default function LoginScreen() {
   }
 
   return (
-    <Screen center>
+    <Screen
+      center
+      topRight={
+        <Pressable onPress={toggleScheme} style={styles.themeToggle} hitSlop={8}>
+          <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={15} color={colors.black} />
+          <Text style={styles.themeToggleText}>{isDark ? 'Modo claro' : 'Modo escuro'}</Text>
+        </Pressable>
+      }
+    >
       <View style={styles.hero}>
         <Logo size={200} />
         <Text style={styles.title}>Bem-vindo de volta</Text>
@@ -79,43 +144,3 @@ export default function LoginScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  hero: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  title: {
-    ...typography.display,
-    color: colors.black,
-    textAlign: 'center',
-    marginTop: spacing.lg,
-  },
-  subtitle: {
-    ...typography.bodyMuted,
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginTop: spacing.xs,
-  },
-  card: {
-    alignSelf: 'stretch',
-    padding: spacing.lg,
-  },
-  error: {
-    color: colors.red,
-    marginBottom: spacing.md,
-    textAlign: 'center',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: spacing.xl,
-  },
-  footerText: {
-    color: colors.textMuted,
-  },
-  link: {
-    color: colors.blue,
-    fontWeight: '600',
-  },
-});

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '../../../components/Avatar';
@@ -16,10 +16,11 @@ import { listShopBarbers } from '../../../lib/api/barbershops';
 import { listServices } from '../../../lib/api/services';
 import { formatCurrency, formatDate, formatDuration, formatTime, toLocalIso } from '../../../lib/format';
 import type { Barber, OpenSlots, PaymentMethod, Service } from '../../../lib/types';
-import { colors } from '../../../theme/colors';
 import { centeredPage } from '../../../theme/layout';
 import { radius, spacing } from '../../../theme/spacing';
+import { useThemeColors } from '../../../theme/ThemeContext';
 import { typography } from '../../../theme/typography';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 
 const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { value: 'PIX', label: 'Pix', icon: 'qr-code-outline' },
@@ -45,6 +46,144 @@ function isKnownSlot(slots: OpenSlots, when: Date): boolean {
 }
 
 export default function BookingScreen() {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    loading: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      ...centeredPage,
+    },
+    headerTitle: {
+      ...typography.h2,
+      color: colors.black,
+    },
+    content: {
+      padding: spacing.lg,
+      paddingBottom: spacing.xxl,
+      ...centeredPage,
+    },
+    firstSection: {
+      marginTop: spacing.sm,
+    },
+    optionCard: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing.sm,
+    },
+    optionCardSelected: {
+      borderColor: colors.black,
+      backgroundColor: colors.surfaceAlt,
+    },
+    serviceInfo: {
+      flex: 1,
+    },
+    optionTitle: {
+      fontSize: 15,
+      color: colors.black,
+      fontWeight: '600',
+    },
+    optionMeta: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    optionPrice: {
+      fontFamily: typography.h2.fontFamily,
+      fontSize: 15,
+      color: colors.black,
+    },
+    barbersRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.md,
+    },
+    barberChip: {
+      alignItems: 'center',
+      width: 72,
+    },
+    barberAvatarSelected: {
+      borderWidth: 2,
+      borderColor: colors.black,
+    },
+    barberName: {
+      fontSize: 12,
+      color: colors.black,
+      textAlign: 'center',
+      marginTop: 4,
+    },
+    barberNameSelected: {
+      fontFamily: typography.label.fontFamily,
+    },
+    hint: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    paymentRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+    },
+    paymentChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      borderWidth: 1.5,
+      borderColor: colors.pillBorder,
+      borderRadius: radius.pill,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+    },
+    paymentChipSelected: {
+      backgroundColor: colors.black,
+      borderColor: colors.black,
+    },
+    paymentChipText: {
+      fontSize: 14,
+      color: colors.black,
+    },
+    paymentChipTextSelected: {
+      color: colors.white,
+    },
+    error: {
+      color: colors.red,
+      marginTop: spacing.md,
+      textAlign: 'center',
+    },
+    footer: {
+      padding: spacing.lg,
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+      backgroundColor: colors.surface,
+      ...centeredPage,
+    },
+    summaryRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.sm,
+      marginBottom: spacing.sm,
+    },
+    summaryText: {
+      flex: 1,
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    summaryPrice: {
+      fontFamily: typography.h2.fontFamily,
+      fontSize: 15,
+      color: colors.black,
+    },
+  }));
   const { shopId } = useLocalSearchParams<{ shopId: string }>();
   const shopIdNumber = Number(shopId);
 
@@ -285,141 +424,3 @@ export default function BookingScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  loading: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    ...centeredPage,
-  },
-  headerTitle: {
-    ...typography.h2,
-    color: colors.black,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-    ...centeredPage,
-  },
-  firstSection: {
-    marginTop: spacing.sm,
-  },
-  optionCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  optionCardSelected: {
-    borderColor: colors.black,
-    backgroundColor: colors.surfaceAlt,
-  },
-  serviceInfo: {
-    flex: 1,
-  },
-  optionTitle: {
-    fontSize: 15,
-    color: colors.black,
-    fontWeight: '600',
-  },
-  optionMeta: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  optionPrice: {
-    fontFamily: typography.h2.fontFamily,
-    fontSize: 15,
-    color: colors.black,
-  },
-  barbersRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-  },
-  barberChip: {
-    alignItems: 'center',
-    width: 72,
-  },
-  barberAvatarSelected: {
-    borderWidth: 2,
-    borderColor: colors.black,
-  },
-  barberName: {
-    fontSize: 12,
-    color: colors.black,
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  barberNameSelected: {
-    fontFamily: typography.label.fontFamily,
-  },
-  hint: {
-    fontSize: 13,
-    color: colors.textMuted,
-  },
-  paymentRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  paymentChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1.5,
-    borderColor: colors.pillBorder,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  paymentChipSelected: {
-    backgroundColor: colors.black,
-    borderColor: colors.black,
-  },
-  paymentChipText: {
-    fontSize: 14,
-    color: colors.black,
-  },
-  paymentChipTextSelected: {
-    color: colors.white,
-  },
-  error: {
-    color: colors.red,
-    marginTop: spacing.md,
-    textAlign: 'center',
-  },
-  footer: {
-    padding: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-    backgroundColor: colors.surface,
-    ...centeredPage,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  summaryText: {
-    flex: 1,
-    fontSize: 13,
-    color: colors.textMuted,
-  },
-  summaryPrice: {
-    fontFamily: typography.h2.fontFamily,
-    fontSize: 15,
-    color: colors.black,
-  },
-});

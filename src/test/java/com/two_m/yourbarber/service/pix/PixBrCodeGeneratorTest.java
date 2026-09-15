@@ -16,8 +16,8 @@ class PixBrCodeGeneratorTest {
      * vector before being wired in (see crc16Hex_matchesKnownVector below).
      */
     private static final String GOLDEN_PAYLOAD =
-            "00020101021226420014BR.GOV.BCB.PIX0120barbeiro@example.com520400005303986"
-                    + "540545.005802BR5912SEU BARBEIRO6009SAO PAULO62100506APT1236304E22C";
+            "00020101021126420014BR.GOV.BCB.PIX0120barbeiro@example.com520400005303986"
+                    + "540545.005802BR5912SEU BARBEIRO6009SAO PAULO62100506APT1236304157D";
 
     @Test
     void generate_knownInputs_matchesGoldenPayload() {

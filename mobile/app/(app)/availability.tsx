@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
-  StyleSheet,
   Switch,
   Text,
   View,
@@ -31,10 +30,11 @@ import {
 } from '../../lib/api/barbers';
 import { formatDate, formatTime, toLocalIso } from '../../lib/format';
 import type { Barber, TimeBlock } from '../../lib/types';
-import { colors } from '../../theme/colors';
 import { centeredPage } from '../../theme/layout';
 import { radius, spacing } from '../../theme/spacing';
+import { useThemeColors } from '../../theme/ThemeContext';
 import { typography } from '../../theme/typography';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 function tomorrow(): Date {
   const d = new Date();
@@ -44,6 +44,106 @@ function tomorrow(): Date {
 }
 
 export default function AvailabilityScreen() {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    loading: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      ...centeredPage,
+    },
+    headerTitle: {
+      ...typography.h2,
+      color: colors.black,
+    },
+    content: {
+      padding: spacing.lg,
+      paddingBottom: spacing.xxl,
+      ...centeredPage,
+    },
+    error: {
+      color: colors.red,
+      textAlign: 'center',
+      marginBottom: spacing.sm,
+    },
+    saved: {
+      color: colors.success,
+      textAlign: 'center',
+      marginBottom: spacing.sm,
+    },
+    rowCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+    },
+    rowText: {
+      flex: 1,
+    },
+    rowTitle: {
+      fontSize: 15,
+      color: colors.black,
+      fontWeight: '600',
+    },
+    rowHint: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    breakToggleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: spacing.md,
+    },
+    saveHours: {
+      marginTop: spacing.md,
+      alignSelf: 'flex-start',
+      paddingHorizontal: spacing.lg,
+    },
+    formCard: {
+      gap: spacing.sm,
+      marginBottom: spacing.md,
+    },
+    emptyBlocks: {
+      color: colors.textMuted,
+      fontSize: 14,
+      marginTop: spacing.sm,
+    },
+    blockRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing.sm,
+    },
+    blockInfo: {
+      flex: 1,
+    },
+    blockDate: {
+      fontSize: 14,
+      color: colors.black,
+      fontWeight: '600',
+      textTransform: 'capitalize',
+    },
+    blockTime: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    remove: {
+      color: colors.danger,
+      fontSize: 13,
+      fontWeight: '600',
+    },
+  }));
   const { session } = useAuth();
   const barberId = session?.userId;
 
@@ -350,103 +450,3 @@ export default function AvailabilityScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  loading: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    ...centeredPage,
-  },
-  headerTitle: {
-    ...typography.h2,
-    color: colors.black,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-    ...centeredPage,
-  },
-  error: {
-    color: colors.red,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  saved: {
-    color: colors.success,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  rowCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  rowText: {
-    flex: 1,
-  },
-  rowTitle: {
-    fontSize: 15,
-    color: colors.black,
-    fontWeight: '600',
-  },
-  rowHint: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  breakToggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: spacing.md,
-  },
-  saveHours: {
-    marginTop: spacing.md,
-    alignSelf: 'flex-start',
-    paddingHorizontal: spacing.lg,
-  },
-  formCard: {
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  emptyBlocks: {
-    color: colors.textMuted,
-    fontSize: 14,
-    marginTop: spacing.sm,
-  },
-  blockRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.sm,
-  },
-  blockInfo: {
-    flex: 1,
-  },
-  blockDate: {
-    fontSize: 14,
-    color: colors.black,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
-  blockTime: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  remove: {
-    color: colors.danger,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-});

@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
 import { radius, spacing } from '../theme/spacing';
+import { useThemedStyles } from '../theme/useThemedStyles';
 
 interface HourRangePickerProps {
   from: number | null;
@@ -19,6 +19,44 @@ interface HourRangePickerProps {
  * the span in between fills in.
  */
 export function HourRangePicker({ from, to, min = 6, max = 23, onChange }: HourRangePickerProps) {
+  const styles = useThemedStyles((colors) => ({
+    grid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.xs,
+      paddingVertical: spacing.xs,
+    },
+    chip: {
+      minWidth: 46,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.sm,
+      borderRadius: radius.sm,
+      borderWidth: 1.5,
+      borderColor: colors.pillBorder,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+    },
+    chipInRange: {
+      backgroundColor: colors.black,
+      borderColor: colors.black,
+    },
+    chipPending: {
+      borderColor: colors.blue,
+    },
+    chipText: {
+      fontFamily: fonts.headingMedium,
+      fontSize: 13,
+      color: colors.black,
+    },
+    chipTextInRange: {
+      color: colors.white,
+    },
+    caption: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 6,
+    },
+  }));
   const [pendingStart, setPendingStart] = useState<number | null>(null);
   const hours = Array.from({ length: max - min + 1 }, (_, i) => min + i);
 
@@ -64,42 +102,3 @@ export function HourRangePicker({ from, to, min = 6, max = 23, onChange }: HourR
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    paddingVertical: spacing.xs,
-  },
-  chip: {
-    minWidth: 46,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.sm,
-    borderWidth: 1.5,
-    borderColor: colors.pillBorder,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-  },
-  chipInRange: {
-    backgroundColor: colors.black,
-    borderColor: colors.black,
-  },
-  chipPending: {
-    borderColor: colors.blue,
-  },
-  chipText: {
-    fontFamily: fonts.headingMedium,
-    fontSize: 13,
-    color: colors.black,
-  },
-  chipTextInRange: {
-    color: colors.white,
-  },
-  caption: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginTop: 6,
-  },
-});

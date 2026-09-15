@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View, type TextInputProps, type TextStyle } from 'react-native';
+import { Text, TextInput, View, type TextInputProps, type TextStyle } from 'react-native';
 
 type FocusArg = Parameters<NonNullable<TextInputProps['onFocus']>>[0];
 type BlurArg = Parameters<NonNullable<TextInputProps['onBlur']>>[0];
 
-import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { radius, spacing } from '../theme/spacing';
+import { useThemeColors } from '../theme/ThemeContext';
+import { useThemedStyles } from '../theme/useThemedStyles';
 
 interface InputProps extends TextInputProps {
   /** Focus-accent color. Kept for back-compat with older call sites. */
@@ -36,6 +37,54 @@ export function Input({
   onBlur,
   ...rest
 }: InputProps) {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    wrap: {
+      marginBottom: spacing.md,
+    },
+    label: {
+      ...typography.label,
+      color: colors.textMuted,
+      marginBottom: 6,
+    },
+    field: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: radius.field,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      height: 54,
+      paddingHorizontal: spacing.md,
+    },
+    fieldDisabled: {
+      opacity: 0.6,
+    },
+    fieldError: {
+      borderColor: colors.danger,
+    },
+    icon: {
+      marginRight: spacing.sm,
+    },
+    input: {
+      flex: 1,
+      fontSize: 15,
+      color: colors.black,
+      height: '100%',
+    },
+    hintText: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 5,
+      marginLeft: 2,
+    },
+    errorText: {
+      fontSize: 12,
+      color: colors.danger,
+      marginTop: 5,
+      marginLeft: 2,
+    },
+  }));
   const [focused, setFocused] = useState(false);
   const accentColor = accent === 'red' ? colors.red : colors.blue;
 
@@ -84,51 +133,3 @@ export function Input({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    marginBottom: spacing.md,
-  },
-  label: {
-    ...typography.label,
-    color: colors.textMuted,
-    marginBottom: 6,
-  },
-  field: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radius.field,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    height: 54,
-    paddingHorizontal: spacing.md,
-  },
-  fieldDisabled: {
-    opacity: 0.6,
-  },
-  fieldError: {
-    borderColor: colors.danger,
-  },
-  icon: {
-    marginRight: spacing.sm,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: colors.black,
-    height: '100%',
-  },
-  hintText: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginTop: 5,
-    marginLeft: 2,
-  },
-  errorText: {
-    fontSize: 12,
-    color: colors.danger,
-    marginTop: 5,
-    marginLeft: 2,
-  },
-});

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '../../components/Button';
@@ -12,12 +12,76 @@ import { getBarber } from '../../lib/api/barbers';
 import { decideJoinRequest, listJoinRequests } from '../../lib/api/join-requests';
 import { formatDateTime } from '../../lib/format';
 import type { JoinRequestResponse } from '../../lib/types';
-import { colors } from '../../theme/colors';
 import { centeredPage } from '../../theme/layout';
 import { spacing } from '../../theme/spacing';
+import { useThemeColors } from '../../theme/ThemeContext';
 import { typography } from '../../theme/typography';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 export default function JoinRequestsScreen() {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.white,
+    },
+    loading: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      ...centeredPage,
+    },
+    headerTitle: {
+      ...typography.h2,
+      color: colors.black,
+    },
+    content: {
+      padding: spacing.lg,
+      paddingBottom: spacing.xxl,
+      ...centeredPage,
+    },
+    error: {
+      color: colors.red,
+      textAlign: 'center',
+      marginBottom: spacing.md,
+    },
+    empty: {
+      textAlign: 'center',
+      color: colors.textMuted,
+      marginTop: spacing.xl,
+    },
+    card: {
+      marginBottom: spacing.md,
+    },
+    itemTitle: {
+      fontFamily: typography.h2.fontFamily,
+      fontSize: 16,
+      color: colors.black,
+    },
+    itemDetail: {
+      fontSize: 13,
+      color: colors.black,
+      marginTop: 4,
+    },
+    itemDate: {
+      fontSize: 12,
+      color: colors.textFaint,
+      marginTop: spacing.xs,
+    },
+    actionRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      marginTop: spacing.md,
+    },
+    actionButton: {
+      flex: 1,
+    },
+  }));
   const { session } = useAuth();
   const [shopId, setShopId] = useState<number | null>(null);
   const [requests, setRequests] = useState<JoinRequestResponse[]>([]);
@@ -111,66 +175,3 @@ export default function JoinRequestsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
-  loading: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    ...centeredPage,
-  },
-  headerTitle: {
-    ...typography.h2,
-    color: colors.black,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-    ...centeredPage,
-  },
-  error: {
-    color: colors.red,
-    textAlign: 'center',
-    marginBottom: spacing.md,
-  },
-  empty: {
-    textAlign: 'center',
-    color: colors.textMuted,
-    marginTop: spacing.xl,
-  },
-  card: {
-    marginBottom: spacing.md,
-  },
-  itemTitle: {
-    fontFamily: typography.h2.fontFamily,
-    fontSize: 16,
-    color: colors.black,
-  },
-  itemDetail: {
-    fontSize: 13,
-    color: colors.black,
-    marginTop: 4,
-  },
-  itemDate: {
-    fontSize: 12,
-    color: colors.textFaint,
-    marginTop: spacing.xs,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  actionButton: {
-    flex: 1,
-  },
-});

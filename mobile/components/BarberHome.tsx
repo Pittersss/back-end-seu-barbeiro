@@ -6,7 +6,6 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
-  StyleSheet,
   Switch,
   Text,
   View,
@@ -21,12 +20,80 @@ import { getBarber } from '../lib/api/barbers';
 import { getBarberShop, toggleAcceptingBarbers } from '../lib/api/barbershops';
 import { getSubscriptionStatus } from '../lib/api/subscriptions';
 import type { Barber, BarberShop, SubscriptionStatus } from '../lib/types';
-import { colors } from '../theme/colors';
 import { centeredPage } from '../theme/layout';
 import { spacing } from '../theme/spacing';
+import { useThemeColors } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
+import { useThemedStyles } from '../theme/useThemedStyles';
 
 export function BarberHome() {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    loading: {
+      flex: 1,
+    },
+    content: {
+      padding: spacing.lg,
+      ...centeredPage,
+    },
+    greetingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      marginBottom: spacing.xl,
+    },
+    greeting: {
+      ...typography.label,
+      color: colors.textMuted,
+    },
+    title: {
+      ...typography.display,
+      color: colors.black,
+      marginTop: 2,
+    },
+    card: {
+      marginBottom: spacing.md,
+    },
+    subscriptionCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      borderColor: colors.red,
+      borderWidth: 1,
+    },
+    statusRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    cardLabel: {
+      ...typography.label,
+      color: colors.textMuted,
+      marginBottom: 4,
+    },
+    cardValue: {
+      fontSize: 14,
+      color: colors.black,
+    },
+    shopName: {
+      fontFamily: typography.h2.fontFamily,
+      fontSize: 18,
+      color: colors.black,
+      marginBottom: 4,
+    },
+    toggleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: spacing.sm,
+    },
+    cardButton: {
+      marginTop: spacing.md,
+    },
+  }));
   const { session } = useAuth();
   const [barber, setBarber] = useState<Barber | null>(null);
   const [shop, setShop] = useState<BarberShop | null>(null);
@@ -177,70 +244,3 @@ export function BarberHome() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  loading: {
-    flex: 1,
-  },
-  content: {
-    padding: spacing.lg,
-    ...centeredPage,
-  },
-  greetingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  greeting: {
-    ...typography.label,
-    color: colors.textMuted,
-  },
-  title: {
-    ...typography.display,
-    color: colors.black,
-    marginTop: 2,
-  },
-  card: {
-    marginBottom: spacing.md,
-  },
-  subscriptionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    borderColor: colors.red,
-    borderWidth: 1,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  cardLabel: {
-    ...typography.label,
-    color: colors.textMuted,
-    marginBottom: 4,
-  },
-  cardValue: {
-    fontSize: 14,
-    color: colors.black,
-  },
-  shopName: {
-    fontFamily: typography.h2.fontFamily,
-    fontSize: 18,
-    color: colors.black,
-    marginBottom: 4,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: spacing.sm,
-  },
-  cardButton: {
-    marginTop: spacing.md,
-  },
-});

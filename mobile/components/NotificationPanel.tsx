@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Modal, Pressable, Text, View } from 'react-native';
 
 import { useNotifications } from '../context/NotificationContext';
 import { formatDateTime } from '../lib/format';
 import type { NotificationItem, NotificationType } from '../lib/types';
-import { colors } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
+import { useThemeColors } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
+import { useThemedStyles } from '../theme/useThemedStyles';
 
 interface NotificationPanelProps {
   visible: boolean;
@@ -29,6 +30,82 @@ const NOTIFICATION_ROUTES: Partial<Record<NotificationType, string>> = {
 };
 
 export function NotificationPanel({ visible, onClose }: NotificationPanelProps) {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    backdrop: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: spacing.lg,
+    },
+    panel: {
+      width: '100%',
+      maxWidth: 400,
+      maxHeight: '70%',
+      backgroundColor: colors.surface,
+      borderRadius: radius.card,
+      padding: spacing.lg,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing.sm,
+    },
+    title: {
+      ...typography.h2,
+      color: colors.black,
+    },
+    markAll: {
+      color: colors.blue,
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    list: {
+      marginTop: spacing.xs,
+    },
+    empty: {
+      textAlign: 'center',
+      color: colors.textMuted,
+      paddingVertical: spacing.lg,
+    },
+    item: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingVertical: spacing.sm,
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+    },
+    itemPressed: {
+      opacity: 0.6,
+    },
+    unreadDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.danger,
+      marginTop: 6,
+      alignSelf: 'flex-start',
+    },
+    dotSpacer: {
+      width: 8,
+    },
+    itemBody: {
+      flex: 1,
+    },
+    message: {
+      fontSize: 14,
+      color: colors.black,
+      lineHeight: 20,
+    },
+    date: {
+      fontSize: 11,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+  }));
   const { notifications, unreadCount, markAllRead, markRead } = useNotifications();
 
   function handlePress(item: NotificationItem) {
@@ -79,79 +156,3 @@ export function NotificationPanel({ visible, onClose }: NotificationPanelProps) 
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.lg,
-  },
-  panel: {
-    width: '100%',
-    maxWidth: 400,
-    maxHeight: '70%',
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
-    padding: spacing.lg,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.sm,
-  },
-  title: {
-    ...typography.h2,
-    color: colors.black,
-  },
-  markAll: {
-    color: colors.blue,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  list: {
-    marginTop: spacing.xs,
-  },
-  empty: {
-    textAlign: 'center',
-    color: colors.textMuted,
-    paddingVertical: spacing.lg,
-  },
-  item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
-  itemPressed: {
-    opacity: 0.6,
-  },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.danger,
-    marginTop: 6,
-    alignSelf: 'flex-start',
-  },
-  dotSpacer: {
-    width: 8,
-  },
-  itemBody: {
-    flex: 1,
-  },
-  message: {
-    fontSize: 14,
-    color: colors.black,
-    lineHeight: 20,
-  },
-  date: {
-    fontSize: 11,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-});

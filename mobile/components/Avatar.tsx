@@ -1,6 +1,5 @@
 import {
   Image,
-  StyleSheet,
   Text,
   View,
   type ImageStyle,
@@ -9,8 +8,9 @@ import {
 } from 'react-native';
 
 import { initials } from '../lib/format';
-import { colors } from '../theme/colors';
+import { useThemeColors } from '../theme/ThemeContext';
 import { fonts } from '../theme/typography';
+import { useThemedStyles } from '../theme/useThemedStyles';
 
 interface AvatarProps {
   name?: string;
@@ -29,6 +29,20 @@ function toUri(value: string): string {
 }
 
 export function Avatar({ name, avatarBase64, size = 44, tone = 'blue', style }: AvatarProps) {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    image: {
+      backgroundColor: colors.pill,
+    },
+    fallback: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    text: {
+      fontFamily: fonts.heading,
+      letterSpacing: 0.5,
+    },
+  }));
   const dimension = { width: size, height: size, borderRadius: size / 2 };
 
   if (avatarBase64) {
@@ -40,33 +54,17 @@ export function Avatar({ name, avatarBase64, size = 44, tone = 'blue', style }: 
     );
   }
 
+  // "black" tone fills with the flipping ink color, so its label must flip to the
+  // paired paper color to stay legible; "blue" tone is a fixed accent fill, so its
+  // label stays fixed white regardless of scheme.
+  const fillColor = tone === 'black' ? colors.black : colors.blue;
+  const labelColor = tone === 'black' ? colors.white : colors.onAccent;
+
   return (
-    <View
-      style={[
-        styles.fallback,
-        dimension,
-        { backgroundColor: tone === 'black' ? colors.black : colors.blue },
-        style,
-      ]}
-    >
-      <Text style={[styles.text, { fontSize: size * 0.38 }]}>
+    <View style={[styles.fallback, dimension, { backgroundColor: fillColor }, style]}>
+      <Text style={[styles.text, { fontSize: size * 0.38, color: labelColor }]}>
         {name ? initials(name) : '?'}
       </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  image: {
-    backgroundColor: colors.pill,
-  },
-  fallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: {
-    color: colors.white,
-    fontFamily: fonts.heading,
-    letterSpacing: 0.5,
-  },
-});

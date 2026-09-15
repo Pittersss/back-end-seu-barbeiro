@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '../../components/Button';
@@ -22,10 +22,11 @@ import {
 } from '../../lib/api/services';
 import { formatCurrency, formatDuration } from '../../lib/format';
 import type { BarberShop, Service } from '../../lib/types';
-import { colors } from '../../theme/colors';
 import { centeredPage } from '../../theme/layout';
 import { radius, spacing } from '../../theme/spacing';
+import { useThemeColors } from '../../theme/ThemeContext';
 import { typography } from '../../theme/typography';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 interface FormState {
   id: number | null;
@@ -38,6 +39,108 @@ interface FormState {
 const EMPTY_FORM: FormState = { id: null, name: '', description: '', durationMinutes: '', price: '' };
 
 export default function ServicesScreen() {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    loading: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      ...centeredPage,
+    },
+    headerTitle: {
+      ...typography.h2,
+      color: colors.black,
+    },
+    content: {
+      padding: spacing.lg,
+      paddingBottom: spacing.xxl,
+      ...centeredPage,
+    },
+    error: {
+      color: colors.red,
+      textAlign: 'center',
+      marginBottom: spacing.sm,
+    },
+    empty: {
+      alignItems: 'center',
+      gap: spacing.md,
+      marginTop: spacing.xxl,
+      paddingHorizontal: spacing.lg,
+    },
+    emptyText: {
+      color: colors.textMuted,
+      textAlign: 'center',
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    emptyList: {
+      color: colors.textMuted,
+      fontSize: 14,
+    },
+    addButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: colors.blue,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    formCard: {
+      marginBottom: spacing.md,
+    },
+    formActions: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      marginTop: spacing.xs,
+    },
+    formButton: {
+      flex: 1,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      marginBottom: spacing.sm,
+    },
+    info: {
+      flex: 1,
+    },
+    name: {
+      fontSize: 15,
+      color: colors.black,
+      fontWeight: '600',
+    },
+    meta: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    tag: {
+      borderWidth: 1.5,
+      borderRadius: radius.pill,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 4,
+    },
+    tagText: {
+      fontSize: 11,
+      fontWeight: '600',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    actions: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+    },
+  }));
   const { session } = useAuth();
 
   const [shop, setShop] = useState<BarberShop | null>(null);
@@ -195,7 +298,7 @@ export default function ServicesScreen() {
               action={
                 !form ? (
                   <Pressable onPress={openCreate} hitSlop={8} style={styles.addButton}>
-                    <Ionicons name="add" size={20} color={colors.white} />
+                    <Ionicons name="add" size={20} color={colors.onAccent} />
                   </Pressable>
                 ) : null
               }
@@ -306,105 +409,3 @@ export default function ServicesScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  loading: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    ...centeredPage,
-  },
-  headerTitle: {
-    ...typography.h2,
-    color: colors.black,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-    ...centeredPage,
-  },
-  error: {
-    color: colors.red,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  empty: {
-    alignItems: 'center',
-    gap: spacing.md,
-    marginTop: spacing.xxl,
-    paddingHorizontal: spacing.lg,
-  },
-  emptyText: {
-    color: colors.textMuted,
-    textAlign: 'center',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  emptyList: {
-    color: colors.textMuted,
-    fontSize: 14,
-  },
-  addButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.blue,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  formCard: {
-    marginBottom: spacing.md,
-  },
-  formActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  formButton: {
-    flex: 1,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  info: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 15,
-    color: colors.black,
-    fontWeight: '600',
-  },
-  meta: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  tag: {
-    borderWidth: 1.5,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-  },
-  tagText: {
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-});

@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import type { OpenSlots } from '../lib/types';
-import { colors } from '../theme/colors';
+import { useThemeColors } from '../theme/ThemeContext';
 import { fonts } from '../theme/typography';
 import { radius, spacing } from '../theme/spacing';
+import { useThemedStyles } from '../theme/useThemedStyles';
 import { Calendar } from './Calendar';
 
 interface DateTimeSelectProps {
@@ -32,6 +33,44 @@ function slotLabel(iso: string): string {
  * each already sized to fit the chosen service).
  */
 export function DateTimeSelect({ value, onChange, slotsByDate, loading }: DateTimeSelectProps) {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    loading: {
+      marginTop: spacing.lg,
+    },
+    empty: {
+      marginTop: spacing.lg,
+      color: colors.textMuted,
+      fontSize: 14,
+      textAlign: 'center',
+    },
+    timeGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+      marginTop: spacing.md,
+    },
+    timePill: {
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      borderRadius: radius.pill,
+      borderWidth: 1.5,
+      borderColor: colors.pillBorder,
+      backgroundColor: colors.surface,
+    },
+    timePillSelected: {
+      backgroundColor: colors.blue,
+      borderColor: colors.blue,
+    },
+    timeText: {
+      fontSize: 14,
+      color: colors.black,
+      fontFamily: fonts.headingMedium,
+    },
+    timeTextSelected: {
+      color: colors.onAccent,
+    },
+  }));
   const daySlots = useMemo(() => slotsByDate[dateKey(value)] ?? [], [slotsByDate, value]);
   const selectedIso = useMemo(() => {
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -75,41 +114,3 @@ export function DateTimeSelect({ value, onChange, slotsByDate, loading }: DateTi
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  loading: {
-    marginTop: spacing.lg,
-  },
-  empty: {
-    marginTop: spacing.lg,
-    color: colors.textMuted,
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  timeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  timePill: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.pill,
-    borderWidth: 1.5,
-    borderColor: colors.pillBorder,
-    backgroundColor: colors.surface,
-  },
-  timePillSelected: {
-    backgroundColor: colors.blue,
-    borderColor: colors.blue,
-  },
-  timeText: {
-    fontSize: 14,
-    color: colors.black,
-    fontFamily: fonts.headingMedium,
-  },
-  timeTextSelected: {
-    color: colors.white,
-  },
-});

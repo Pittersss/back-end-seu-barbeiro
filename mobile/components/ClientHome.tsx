@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from './Avatar';
@@ -9,12 +9,87 @@ import { Card } from './Card';
 import { useAuth } from '../context/AuthContext';
 import { listBarberShops } from '../lib/api/barbershops';
 import type { BarberShop } from '../lib/types';
-import { colors } from '../theme/colors';
 import { centeredPage } from '../theme/layout';
 import { spacing } from '../theme/spacing';
+import { useThemeColors } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
+import { useThemedStyles } from '../theme/useThemedStyles';
 
 export function ClientHome() {
+  const colors = useThemeColors();
+  const styles = useThemedStyles((colors) => ({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    header: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.md,
+      ...centeredPage,
+    },
+    greetingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+    },
+    greeting: {
+      ...typography.label,
+      color: colors.textMuted,
+    },
+    title: {
+      ...typography.display,
+      color: colors.black,
+      marginTop: 2,
+    },
+    list: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      paddingBottom: spacing.xl,
+      gap: spacing.md,
+      ...centeredPage,
+    },
+    empty: {
+      textAlign: 'center',
+      color: colors.textMuted,
+      marginTop: spacing.xl,
+    },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    cardPressed: {
+      transform: [{ scale: 0.985 }],
+      opacity: 0.9,
+    },
+    cardIcon: {
+      width: 46,
+      height: 46,
+      borderRadius: 23,
+      backgroundColor: colors.blueSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: spacing.md,
+    },
+    cardBody: {
+      flex: 1,
+    },
+    cardTitle: {
+      fontFamily: typography.h2.fontFamily,
+      fontSize: 17,
+      letterSpacing: 0.3,
+      color: colors.black,
+    },
+    cardSubtitle: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginTop: 3,
+    },
+    cardStatus: {
+      ...typography.caption,
+      marginTop: 6,
+    },
+  }));
   const { session } = useAuth();
   const [shops, setShops] = useState<BarberShop[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,77 +163,3 @@ export function ClientHome() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  header: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
-    ...centeredPage,
-  },
-  greetingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  greeting: {
-    ...typography.label,
-    color: colors.textMuted,
-  },
-  title: {
-    ...typography.display,
-    color: colors.black,
-    marginTop: 2,
-  },
-  list: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xl,
-    gap: spacing.md,
-    ...centeredPage,
-  },
-  empty: {
-    textAlign: 'center',
-    color: colors.textMuted,
-    marginTop: spacing.xl,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  cardPressed: {
-    transform: [{ scale: 0.985 }],
-    opacity: 0.9,
-  },
-  cardIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: colors.blueSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
-  },
-  cardBody: {
-    flex: 1,
-  },
-  cardTitle: {
-    fontFamily: typography.h2.fontFamily,
-    fontSize: 17,
-    letterSpacing: 0.3,
-    color: colors.black,
-  },
-  cardSubtitle: {
-    fontSize: 13,
-    color: colors.textMuted,
-    marginTop: 3,
-  },
-  cardStatus: {
-    ...typography.caption,
-    marginTop: 6,
-  },
-});
