@@ -83,10 +83,14 @@ export default function PixScreen() {
       borderRadius: radius.card,
       padding: spacing.md,
       width: '100%',
+      // A few px wider than the column so the copy icon has room.
+      marginHorizontal: -spacing.xs,
       gap: spacing.sm,
     },
     copyText: {
       flex: 1,
+      // Without minWidth 0 the long unbroken payload refuses to shrink and pushes the icon out.
+      minWidth: 0,
       fontSize: 12,
       color: colors.black,
     },
@@ -198,7 +202,12 @@ export default function PixScreen() {
           <Text style={styles.copyText} numberOfLines={2}>
             {pix.pixCopyPaste}
           </Text>
-          <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={18} color={colors.black} />
+          <Ionicons
+            name={copied ? 'checkmark' : 'copy-outline'}
+            size={18}
+            color={colors.black}
+            style={{ flexShrink: 0 }}
+          />
         </Pressable>
         {copied ? <Text style={styles.copiedHint}>Copiado!</Text> : null}
 

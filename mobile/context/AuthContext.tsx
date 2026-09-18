@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import * as authApi from '../lib/api/auth';
 import { getMe } from '../lib/api/users';
@@ -77,6 +77,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return () => setUnauthorizedHandler(null);
   }, []);
+
+  // Login/verify responses carry only token + name, and a restored session may predate the
+  // avatar, so pull the profile once per signed-in user to fill the photo (one small GET).
+  // Keyed on userId, so it never re-runs for the avatar/name it just wrote.
+  const sessionRef = useRef<Session | null>(null);
+  sessionRef.current = session;
+  useEffect(() => {
+    if (!session?.userId) return;
+    let cancelled = false;
+    getMe()
+      .then((profile) => {
+        const current = sessionRef.current;
+        if (cancelled || !current || current.userId !== session.userId) return;
+        const avatar = profile.avatarBase64 ?? null;
+        if (current.avatarBase64 === avatar && current.name === profile.name) return;
+        return persist({ ...current, name: profile.name, avatarBase64: avatar });
+      })
+      .catch(() => {
+        // Non-critical: the initials fallback stays until the next profile refresh.
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.userId]);
 
   async function persist(next: Session) {
     setAuthToken(next.token);
