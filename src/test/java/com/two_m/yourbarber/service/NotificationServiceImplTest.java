@@ -72,7 +72,7 @@ class NotificationServiceImplTest {
         verify(notificationRepository).save(captor.capture());
         assertThat(captor.getValue().getType()).isEqualTo(NotificationType.APPOINTMENT_CONFIRMED);
         assertThat(captor.getValue().getMessage()).isEqualTo("Confirmado");
-        verify(pushService).sendToUser(eq(5L), any(), eq("Confirmado"));
+        verify(pushService, org.mockito.Mockito.timeout(2000)).sendToUser(eq(5L), any(), eq("Confirmado"));
     }
 
     @Test

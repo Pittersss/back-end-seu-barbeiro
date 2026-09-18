@@ -53,7 +53,7 @@ public class PixServiceImpl implements PixService {
             throw new BusinessRuleException("Barber has not configured a Pix key");
         }
 
-        BigDecimal amount = appointment.getService().getPrice();
+        BigDecimal amount = appointment.totalPrice();
         if (amount == null || amount.signum() <= 0) {
             throw new BusinessRuleException("Service has no price configured");
         }

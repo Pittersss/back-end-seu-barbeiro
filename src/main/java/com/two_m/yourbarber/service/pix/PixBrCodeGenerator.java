@@ -49,7 +49,7 @@ public final class PixBrCodeGenerator {
         StringBuilder payload = new StringBuilder();
         payload.append(field("00", PAYLOAD_FORMAT_INDICATOR));
         payload.append(field("01", STATIC_INDICATOR));
-        payload.append(field("26", field("00", GUI) + field("01", pixKey.trim())));
+        payload.append(field("26", field("00", GUI) + field("01", normalizeKey(pixKey))));
         payload.append(field("52", MERCHANT_CATEGORY_CODE));
         payload.append(field("53", TRANSACTION_CURRENCY_BRL));
         if (amount != null) {
@@ -63,6 +63,74 @@ public final class PixBrCodeGenerator {
         payload.append("6304");
 
         return payload + crc16Hex(payload.toString());
+    }
+
+    /**
+     * Wallets only accept a key in its canonical form, but barbers type it however they like:
+     * "(11) 98888-7777" or "+55 11 98888-7777" for phones, "123.456.789-00" / "12.345.678/0001-90"
+     * for CPF/CNPJ. Formatted phones become "+55DDDNUMBER", formatted CPF/CNPJ digits only; emails
+     * and random (UUID) keys pass through. Bare digit strings are classified by length and CPF
+     * check digits (see {@link #normalizeBareDigits}).
+     */
+    static String normalizeKey(String rawKey) {
+        String key = rawKey.trim();
+        if (key.contains("@")) {
+            return key.toLowerCase();
+        }
+        if (key.matches("(?i)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
+            return key.toLowerCase();
+        }
+        String digits = key.replaceAll("\\D", "");
+        if (key.startsWith("+")) {
+            return "+" + digits;
+        }
+        if (key.contains("(") || key.contains(" ")) {
+            return digits.length() <= 11 ? "+55" + digits : "+" + digits;
+        }
+        if (key.matches("[\\d.\\-/]+")) {
+            boolean punctuated = !key.matches("\\d+");
+            if (punctuated) {
+                return digits;
+            }
+            return normalizeBareDigits(digits);
+        }
+        return key;
+    }
+
+    /**
+     * Bare digits are a phone, CPF or CNPJ. 14 digits is a CNPJ; 11 digits is a CPF only when its
+     * check digits are valid, otherwise a Brazilian mobile (DDD + 9 + number) that lacks "+55";
+     * 10 digits is a landline; 12-13 digits starting with 55 already carry the country code.
+     */
+    private static String normalizeBareDigits(String digits) {
+        int n = digits.length();
+        if (n == 11) {
+            return isValidCpf(digits) ? digits : "+55" + digits;
+        }
+        if (n == 10) {
+            return "+55" + digits;
+        }
+        if ((n == 12 || n == 13) && digits.startsWith("55")) {
+            return "+" + digits;
+        }
+        return digits;
+    }
+
+    private static boolean isValidCpf(String d) {
+        if (d.chars().distinct().count() == 1) {
+            return false;
+        }
+        for (int len = 9; len <= 10; len++) {
+            int sum = 0;
+            for (int i = 0; i < len; i++) {
+                sum += (d.charAt(i) - '0') * (len + 1 - i);
+            }
+            int check = (sum * 10) % 11 % 10;
+            if (check != d.charAt(len) - '0') {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static String referenceLabel(String txId) {

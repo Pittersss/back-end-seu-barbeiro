@@ -57,10 +57,10 @@ export function unblockClient(barberId: number, clientId: number) {
 
 export function getOpenSlots(
   barberId: number,
-  serviceId: number,
+  serviceIds: number[],
   from: string,
   to: string,
 ) {
-  const query = `serviceId=${serviceId}&from=${from}&to=${to}`;
+  const query = `serviceId=${serviceIds.join(',')}&from=${from}&to=${to}`;
   return request<OpenSlots>(`/api/barbers/${barberId}/open-slots?${query}`);
 }

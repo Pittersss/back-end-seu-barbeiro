@@ -11,11 +11,16 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -56,11 +61,42 @@ public class Appointment {
     @JoinColumn(name = "service_id")
     private Service service;
 
+    /** Every service booked in this visit; {@link #service} is always the first of them. */
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "appointment_services",
+            joinColumns = @JoinColumn(name = "appointment_id"),
+            inverseJoinColumns = @JoinColumn(name = "service_id"))
+    @Builder.Default
+    private List<Service> services = new ArrayList<>();
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    /** All booked services, falling back to the primary one for rows built without the list. */
+    public List<Service> allServices() {
+        if (services != null && !services.isEmpty()) {
+            return services;
+        }
+        return service == null ? List.of() : List.of(service);
+    }
+
+    public int totalDurationMinutes() {
+        return allServices().stream()
+                .mapToInt(s -> s.getDurationMinutes() != null && s.getDurationMinutes() > 0
+                        ? s.getDurationMinutes()
+                        : 30)
+                .sum();
+    }
+
+    public BigDecimal totalPrice() {
+        return allServices().stream()
+                .map(s -> s.getPrice() == null ? BigDecimal.ZERO : s.getPrice())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 
     @PrePersist
     protected void onCreate() {

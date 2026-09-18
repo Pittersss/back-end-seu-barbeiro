@@ -11,9 +11,12 @@ import com.two_m.yourbarber.repository.NotificationRepository;
 import com.two_m.yourbarber.repository.UserRepository;
 import com.two_m.yourbarber.service.push.PushService;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -68,7 +71,30 @@ public class NotificationServiceImpl implements NotificationService {
                         .appointment(appointment)
                         .build();
         notificationRepository.save(notification);
-        pushService.sendToUser(recipientId, PUSH_TITLE, message);
+        pushAfterCommit(recipientId, message);
+    }
+
+    /**
+     * Push delivery is a network round-trip per subscription, so it must neither block the
+     * caller's request nor fire before the notification row is visible to the recipient's next
+     * poll — hence: after the transaction commits, on a background thread.
+     */
+    private void pushAfterCommit(Long recipientId, String message) {
+        Runnable send =
+                () ->
+                        CompletableFuture.runAsync(
+                                () -> pushService.sendToUser(recipientId, PUSH_TITLE, message));
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            send.run();
+                        }
+                    });
+        } else {
+            send.run();
+        }
     }
 
     private Notification findNotification(Long id) {

@@ -85,6 +85,9 @@ export default function BookingScreen() {
       borderColor: colors.black,
       backgroundColor: colors.surfaceAlt,
     },
+    checkbox: {
+      marginRight: spacing.sm,
+    },
     serviceInfo: {
       flex: 1,
     },
@@ -191,7 +194,7 @@ export default function BookingScreen() {
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [service, setService] = useState<Service | null>(null);
+  const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [barber, setBarber] = useState<Barber | null>(null);
   const [scheduledAt, setScheduledAt] = useState<Date | null>(null);
   const [slotsByDate, setSlotsByDate] = useState<OpenSlots>({});
@@ -221,7 +224,7 @@ export default function BookingScreen() {
   );
 
   useEffect(() => {
-    if (!service || !barber) {
+    if (selectedServices.length === 0 || !barber) {
       setSlotsByDate({});
       setScheduledAt(null);
       return;
@@ -231,7 +234,12 @@ export default function BookingScreen() {
     const today = new Date();
     const to = new Date();
     to.setDate(today.getDate() + BOOKING_WINDOW_DAYS);
-    getOpenSlots(barber.id, service.id, dateKey(today), dateKey(to))
+    getOpenSlots(
+      barber.id,
+      selectedServices.map((s) => s.id),
+      dateKey(today),
+      dateKey(to),
+    )
       .then((slots) => {
         if (cancelled) return;
         setSlotsByDate(slots);
@@ -248,7 +256,7 @@ export default function BookingScreen() {
     return () => {
       cancelled = true;
     };
-  }, [service, barber]);
+  }, [selectedServices, barber]);
 
   const visibleServices = useMemo(
     () => (barber ? services.filter((s) => s.barberId == null || s.barberId === barber.id) : services),
@@ -258,13 +266,24 @@ export default function BookingScreen() {
   // A service either belongs to one specific barber or (barberId == null) is
   // shared by the whole team, so this is a single O(n) pass over barbers —
   // no per-barber lookups or extra requests.
-  const visibleBarbers = useMemo(
-    () => (service?.barberId != null ? barbers.filter((b) => b.id === service.barberId) : barbers),
-    [barbers, service],
-  );
+  const visibleBarbers = useMemo(() => {
+    const pinnedBarberIds = new Set(
+      selectedServices.filter((s) => s.barberId != null).map((s) => s.barberId as number),
+    );
+    return pinnedBarberIds.size > 0 ? barbers.filter((b) => pinnedBarberIds.has(b.id)) : barbers;
+  }, [barbers, selectedServices]);
 
-  function handleSelectService(item: Service) {
-    setService(item);
+  function handleToggleService(item: Service) {
+    setSelectedServices((current) => {
+      if (current.some((s) => s.id === item.id)) {
+        return current.filter((s) => s.id !== item.id);
+      }
+      // Services pinned to different barbers can't be combined in one visit.
+      const next = current.filter(
+        (s) => item.barberId == null || s.barberId == null || s.barberId === item.barberId,
+      );
+      return [...next, item];
+    });
     setBarber((current) =>
       current && item.barberId != null && current.id !== item.barberId ? null : current,
     );
@@ -272,29 +291,33 @@ export default function BookingScreen() {
 
   function handleSelectBarber(item: Barber) {
     setBarber(item);
-    setService((current) =>
-      current && current.barberId != null && current.barberId !== item.id ? null : current,
+    setSelectedServices((current) =>
+      current.filter((s) => s.barberId == null || s.barberId === item.id),
     );
   }
 
+  const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+  const totalMinutes = selectedServices.reduce((sum, s) => sum + s.durationMinutes, 0);
+
   const canSubmit = Boolean(
-    service && barber && scheduledAt && isKnownSlot(slotsByDate, scheduledAt),
+    selectedServices.length > 0 && barber && scheduledAt && isKnownSlot(slotsByDate, scheduledAt),
   );
 
   const summary = useMemo(() => {
-    if (!service) return 'Selecione um serviço';
-    if (!scheduledAt) return `${service.name} · escolha um horário`;
-    return `${service.name} · ${formatDate(scheduledAt.toISOString())} · ${formatTime(scheduledAt.toISOString())}`;
-  }, [service, scheduledAt]);
+    if (selectedServices.length === 0) return 'Selecione um ou mais serviços';
+    const names = selectedServices.map((s) => s.name).join(' + ');
+    if (!scheduledAt) return `${names} · escolha um horário`;
+    return `${names} · ${formatDate(scheduledAt.toISOString())} · ${formatTime(scheduledAt.toISOString())}`;
+  }, [selectedServices, scheduledAt]);
 
   async function handleSubmit() {
-    if (!service || !barber || !scheduledAt) return;
+    if (selectedServices.length === 0 || !barber || !scheduledAt) return;
     setError(null);
     setSubmitting(true);
     try {
       const appointment = await createAppointment({
         barberId: barber.id,
-        serviceId: service.id,
+        serviceIds: selectedServices.map((s) => s.id),
         scheduledAt: toLocalIso(scheduledAt),
         paymentMethod,
       });
@@ -332,15 +355,21 @@ export default function BookingScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <SectionHeader title="Serviço" style={styles.firstSection} />
+        <SectionHeader title="Serviços" style={styles.firstSection} />
         {barber && visibleServices.length === 0 ? (
           <Text style={styles.hint}>{barber.name} não tem serviços cadastrados.</Text>
         ) : (
           visibleServices.map((item) => {
-            const selected = service?.id === item.id;
+            const selected = selectedServices.some((s) => s.id === item.id);
             return (
-              <Pressable key={item.id} onPress={() => handleSelectService(item)}>
+              <Pressable key={item.id} onPress={() => handleToggleService(item)}>
                 <Card style={[styles.optionCard, selected && styles.optionCardSelected]} variant="flat">
+                  <Ionicons
+                    name={selected ? 'checkbox' : 'square-outline'}
+                    size={22}
+                    color={selected ? colors.blue : colors.textFaint}
+                    style={styles.checkbox}
+                  />
                   <View style={styles.serviceInfo}>
                     <Text style={styles.optionTitle}>{item.name}</Text>
                     <Text style={styles.optionMeta}>{formatDuration(item.durationMinutes)}</Text>
@@ -374,8 +403,8 @@ export default function BookingScreen() {
         </View>
 
         <SectionHeader title="Data e hora" />
-        {!service || !barber ? (
-          <Text style={styles.hint}>Escolha o serviço e o barbeiro para ver os horários livres.</Text>
+        {selectedServices.length === 0 || !barber ? (
+          <Text style={styles.hint}>Escolha ao menos um serviço e o barbeiro para ver os horários livres.</Text>
         ) : (
           <DateTimeSelect
             value={scheduledAt ?? new Date()}
@@ -412,7 +441,11 @@ export default function BookingScreen() {
           <Text style={styles.summaryText} numberOfLines={1}>
             {summary}
           </Text>
-          {service ? <Text style={styles.summaryPrice}>{formatCurrency(service.price)}</Text> : null}
+          {selectedServices.length > 0 ? (
+            <Text style={styles.summaryPrice}>
+              {formatCurrency(totalPrice)} · {formatDuration(totalMinutes)}
+            </Text>
+          ) : null}
         </View>
         <Button
           title="Confirmar agendamento"

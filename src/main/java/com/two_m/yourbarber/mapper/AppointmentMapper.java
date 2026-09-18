@@ -20,7 +20,16 @@ public final class AppointmentMapper {
                 .barberName(appointment.getBarber().getName())
                 .barberAvatarBase64(appointment.getBarber().getAvatarBase64())
                 .serviceId(appointment.getService().getId())
-                .serviceName(appointment.getService().getName())
+                .serviceName(
+                        appointment.allServices().stream()
+                                .map(com.two_m.yourbarber.model.Service::getName)
+                                .collect(java.util.stream.Collectors.joining(" + ")))
+                .serviceNames(
+                        appointment.allServices().stream()
+                                .map(com.two_m.yourbarber.model.Service::getName)
+                                .toList())
+                .totalPrice(appointment.totalPrice())
+                .totalDurationMinutes(appointment.totalDurationMinutes())
                 .build();
     }
 }

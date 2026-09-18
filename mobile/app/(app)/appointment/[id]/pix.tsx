@@ -61,10 +61,13 @@ export default function PixScreen() {
       justifyContent: 'center',
       padding: spacing.md,
       marginBottom: spacing.lg,
+      // Scanners need dark-on-light with a quiet zone, whatever the app theme is.
+      backgroundColor: '#FFFFFF',
     },
     qr: {
-      width: 220,
-      height: 220,
+      width: 240,
+      height: 240,
+      backgroundColor: '#FFFFFF',
     },
     label: {
       ...typography.label,

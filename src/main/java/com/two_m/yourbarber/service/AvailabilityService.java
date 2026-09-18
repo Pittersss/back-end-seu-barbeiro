@@ -15,4 +15,8 @@ public interface AvailabilityService {
      */
     Map<LocalDate, List<LocalDateTime>> openSlots(
             Long barberId, Long serviceId, LocalDate from, LocalDate to);
+
+    /** Same as above for several services booked back-to-back (durations are summed). */
+    Map<LocalDate, List<LocalDateTime>> openSlots(
+            Long barberId, List<Long> serviceIds, LocalDate from, LocalDate to);
 }

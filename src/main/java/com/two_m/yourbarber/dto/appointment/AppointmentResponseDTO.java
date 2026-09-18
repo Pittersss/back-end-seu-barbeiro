@@ -2,7 +2,9 @@ package com.two_m.yourbarber.dto.appointment;
 
 import com.two_m.yourbarber.model.enums.AppointmentStatus;
 import com.two_m.yourbarber.model.enums.PaymentMethod;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,4 +30,7 @@ public class AppointmentResponseDTO {
     private String barberAvatarBase64;
     private Long serviceId;
     private String serviceName;
+    private List<String> serviceNames;
+    private BigDecimal totalPrice;
+    private Integer totalDurationMinutes;
 }

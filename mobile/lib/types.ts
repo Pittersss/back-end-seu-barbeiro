@@ -218,11 +218,14 @@ export interface Appointment {
   barberAvatarBase64?: string | null;
   serviceId: number;
   serviceName: string;
+  serviceNames?: string[];
+  totalPrice?: number;
+  totalDurationMinutes?: number;
 }
 
 export interface AppointmentPost {
   barberId: number;
-  serviceId: number;
+  serviceIds: number[];
   scheduledAt: string;
   paymentMethod: PaymentMethod;
 }

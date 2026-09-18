@@ -140,8 +140,9 @@ mobile/                 Expo Router app (TypeScript), see mobile/README.md
   address (it just bounces later), so this logs the code unconditionally rather than
   only on a caught send failure. Never enable it where logs are shared (prod/staging).
 - Profile identity (name / phone / avatar) for **all** roles goes through
-  `PUT /api/users/me` (`lib/api/users.ts`); `avatarBase64` is a downscaled 256px
-  JPEG string (`lib/avatar.ts`). Barber-only fields (pixKey, delayTolerance,
+  `PUT /api/users/me` (`lib/api/users.ts`); `avatarBase64` is a downscaled 192px
+  JPEG string (`lib/avatar.ts`) — kept small because it's stored as base64 TEXT
+  directly in Postgres, not a separate object store. Barber-only fields (pixKey, delayTolerance,
   workStartHour/workEndHour/breakStartHour/breakEndHour) still use
   `PUT /api/barbers/{id}` — that endpoint is a **full replace**, so any screen that
   saves one barber field must send them all (see `profile.tsx` / `availability.tsx`).

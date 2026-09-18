@@ -24,7 +24,7 @@ public class AvailabilityController {
     @GetMapping
     public ResponseEntity<Map<LocalDate, List<LocalDateTime>>> openSlots(
             @PathVariable Long barberId,
-            @RequestParam Long serviceId,
+            @RequestParam List<Long> serviceId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return ResponseEntity.ok(availabilityService.openSlots(barberId, serviceId, from, to));

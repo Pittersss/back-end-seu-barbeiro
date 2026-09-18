@@ -16,7 +16,7 @@ import java.util.Map;
 /** Renders a Pix BR Code payload as a base64-encoded PNG QR code image. */
 public final class PixQrCodeImageGenerator {
 
-    private static final int DEFAULT_SIZE_PX = 320;
+    private static final int DEFAULT_SIZE_PX = 640;
 
     private PixQrCodeImageGenerator() {}
 
@@ -27,8 +27,9 @@ public final class PixQrCodeImageGenerator {
     public static String toPngBase64(String content, int sizePx) {
         try {
             Map<EncodeHintType, Object> hints = new EnumMap<>(EncodeHintType.class);
+            // 4-module quiet zone is what the QR spec (and bank scanners) require; 1 was too tight.
             hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M);
-            hints.put(EncodeHintType.MARGIN, 1);
+            hints.put(EncodeHintType.MARGIN, 4);
 
             BitMatrix matrix =
                     new QRCodeWriter()

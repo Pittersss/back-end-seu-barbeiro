@@ -18,8 +18,8 @@ class PixQrCodeImageGeneratorTest {
         BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
 
         assertThat(image).isNotNull();
-        assertThat(image.getWidth()).isEqualTo(320);
-        assertThat(image.getHeight()).isEqualTo(320);
+        assertThat(image.getWidth()).isEqualTo(640);
+        assertThat(image.getHeight()).isEqualTo(640);
     }
 
     @Test

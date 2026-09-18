@@ -1,12 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 
 import { useAuth } from './AuthContext';
 import * as notificationsApi from '../lib/api/notifications';
 import * as pushApi from '../lib/api/push';
 import type { NotificationItem } from '../lib/types';
 
-const POLL_INTERVAL_MS = 30000;
+// Cheap unread-count poll; the full list is only refetched when the count changes.
+const POLL_INTERVAL_MS = 5000;
 
 interface NotificationContextValue {
   notifications: NotificationItem[];
@@ -89,13 +90,20 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const wasLoggedIn = useRef(false);
 
-  async function refresh() {
+  const lastCount = useRef(-1);
+
+  async function refresh(force = true) {
     if (!session) return;
     try {
+      if (!force) {
+        const { count } = await notificationsApi.getUnreadCount();
+        if (count === lastCount.current) return;
+      }
       const [list, { count }] = await Promise.all([
         notificationsApi.listNotifications(),
         notificationsApi.getUnreadCount(),
       ]);
+      lastCount.current = count;
       setNotifications(list);
       setUnreadCount(count);
     } catch {
@@ -114,10 +122,17 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       return;
     }
     wasLoggedIn.current = true;
+    lastCount.current = -1;
     refresh();
     registerWebPush();
-    const interval = setInterval(refresh, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
+    const interval = setInterval(() => refresh(false), POLL_INTERVAL_MS);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refresh();
+    });
+    return () => {
+      clearInterval(interval);
+      sub.remove();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.userId]);
 

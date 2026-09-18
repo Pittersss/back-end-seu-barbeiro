@@ -43,7 +43,15 @@ public class AppointmentServiceImpl implements AppointmentService {
     public AppointmentResponseDTO createAppointment(AppointmentPostDTO dto, Long clientId) {
         Client client = findClient(clientId);
         Barber barber = findBarber(dto.getBarberId());
-        com.two_m.yourbarber.model.Service service = findService(dto.getServiceId());
+        List<Long> serviceIds =
+                dto.getServiceIds() != null && !dto.getServiceIds().isEmpty()
+                        ? dto.getServiceIds().stream().distinct().toList()
+                        : dto.getServiceId() != null ? List.of(dto.getServiceId()) : List.of();
+        if (serviceIds.isEmpty()) {
+            throw new BusinessRuleException("Selecione ao menos um serviço.");
+        }
+        List<com.two_m.yourbarber.model.Service> services =
+                serviceIds.stream().map(this::findService).toList();
 
         if (!barber.isAvailable()) {
             throw new BusinessRuleException("Barber is not currently available");
@@ -51,23 +59,27 @@ public class AppointmentServiceImpl implements AppointmentService {
         if (subscriptionService.getStatus(barber.getId()).getStatus() != SubscriptionStatus.ACTIVE) {
             throw new BusinessRuleException("Barber is not currently available");
         }
-        if (!service.isAvailable()) {
-            throw new BusinessRuleException("Service is not currently available");
-        }
-        if (barber.getBarberShop() == null
-                || service.getBarberShop() == null
-                || !barber.getBarberShop().getId().equals(service.getBarberShop().getId())) {
-            throw new BusinessRuleException("Barber does not offer this service");
-        }
-        if (service.getBarber() != null && !service.getBarber().getId().equals(barber.getId())) {
-            throw new BusinessRuleException("Barber does not offer this service");
+        for (com.two_m.yourbarber.model.Service service : services) {
+            if (!service.isAvailable()) {
+                throw new BusinessRuleException("Service is not currently available");
+            }
+            if (barber.getBarberShop() == null
+                    || service.getBarberShop() == null
+                    || !barber.getBarberShop().getId().equals(service.getBarberShop().getId())) {
+                throw new BusinessRuleException("Barber does not offer this service");
+            }
+            if (service.getBarber() != null
+                    && !service.getBarber().getId().equals(barber.getId())) {
+                throw new BusinessRuleException("Barber does not offer this service");
+            }
         }
         if (clientBlockRepository.existsByBarberIdAndClientId(barber.getId(), client.getId())) {
             throw new ForbiddenOperationException(
                     "Você não pode agendar com este barbeiro no momento.");
         }
         LocalDateTime start = dto.getScheduledAt();
-        LocalDateTime end = start.plusMinutes(durationOf(service));
+        int totalMinutes = services.stream().mapToInt(this::durationOf).sum();
+        LocalDateTime end = start.plusMinutes(totalMinutes);
         if (isOutsideWorkingHours(barber, start, end)) {
             throw new BusinessRuleException("Fora do horário de atendimento do barbeiro.");
         }
@@ -77,7 +89,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         if (overlapsTimeBlock(barber.getId(), start, end)) {
             throw new BusinessRuleException("O barbeiro bloqueou esse horário.");
         }
-        if (hasSchedulingConflict(barber.getId(), dto.getScheduledAt(), service)) {
+        if (hasSchedulingConflict(barber.getId(), start, end)) {
             throw new BusinessRuleException("Barber already has an appointment at that time");
         }
 
@@ -87,7 +99,8 @@ public class AppointmentServiceImpl implements AppointmentService {
                         .paymentMethod(dto.getPaymentMethod())
                         .client(client)
                         .barber(barber)
-                        .service(service)
+                        .service(services.get(0))
+                        .services(new java.util.ArrayList<>(services))
                         .build();
 
         Appointment saved = appointmentRepository.save(appointment);
@@ -206,10 +219,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     private boolean hasSchedulingConflict(
-            Long barberId,
-            LocalDateTime newStart,
-            com.two_m.yourbarber.model.Service newService) {
-        LocalDateTime newEnd = newStart.plusMinutes(newService.getDurationMinutes());
+            Long barberId, LocalDateTime newStart, LocalDateTime newEnd) {
 
         return appointmentRepository.findByBarberId(barberId).stream()
                 .filter(a -> a.getStatus() != AppointmentStatus.CANCELLED)
@@ -217,8 +227,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                         a -> {
                             LocalDateTime existingStart = a.getScheduledAt();
                             LocalDateTime existingEnd =
-                                    existingStart.plusMinutes(
-                                            a.getService().getDurationMinutes());
+                                    existingStart.plusMinutes(a.totalDurationMinutes());
                             return existingStart.isBefore(newEnd)
                                     && newStart.isBefore(existingEnd);
                         });

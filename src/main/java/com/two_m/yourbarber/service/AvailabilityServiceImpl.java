@@ -38,6 +38,12 @@ public class AvailabilityServiceImpl implements AvailabilityService {
     @Override
     public Map<LocalDate, List<LocalDateTime>> openSlots(
             Long barberId, Long serviceId, LocalDate from, LocalDate to) {
+        return openSlots(barberId, List.of(serviceId), from, to);
+    }
+
+    @Override
+    public Map<LocalDate, List<LocalDateTime>> openSlots(
+            Long barberId, List<Long> serviceIds, LocalDate from, LocalDate to) {
 
         Barber barber =
                 barberRepository
@@ -46,15 +52,18 @@ public class AvailabilityServiceImpl implements AvailabilityService {
                                 () ->
                                         new ResourceNotFoundException(
                                                 "Barber not found: " + barberId));
-        com.two_m.yourbarber.model.Service service =
-                serviceRepository
-                        .findById(serviceId)
-                        .orElseThrow(
-                                () ->
-                                        new ResourceNotFoundException(
-                                                "Service not found: " + serviceId));
-
-        if (service.getBarber() != null && !service.getBarber().getId().equals(barberId)) {
+        List<com.two_m.yourbarber.model.Service> selected = new java.util.ArrayList<>();
+        for (Long serviceId : serviceIds) {
+            selected.add(
+                    serviceRepository
+                            .findById(serviceId)
+                            .orElseThrow(
+                                    () ->
+                                            new ResourceNotFoundException(
+                                                    "Service not found: " + serviceId)));
+        }
+        if (selected.stream()
+                .anyMatch(s -> s.getBarber() != null && !s.getBarber().getId().equals(barberId))) {
             return new LinkedHashMap<>();
         }
         if (subscriptionService.getStatus(barberId).getStatus() != SubscriptionStatus.ACTIVE) {
@@ -62,9 +71,13 @@ public class AvailabilityServiceImpl implements AvailabilityService {
         }
 
         int duration =
-                service.getDurationMinutes() != null && service.getDurationMinutes() > 0
-                        ? service.getDurationMinutes()
-                        : DEFAULT_DURATION_MINUTES;
+                selected.stream()
+                        .mapToInt(
+                                s ->
+                                        s.getDurationMinutes() != null && s.getDurationMinutes() > 0
+                                                ? s.getDurationMinutes()
+                                                : DEFAULT_DURATION_MINUTES)
+                        .sum();
 
         LocalDate today = LocalDate.now();
         LocalDate start = from.isBefore(today) ? today : from;
@@ -160,8 +173,7 @@ public class AvailabilityServiceImpl implements AvailabilityService {
     }
 
     private static int apptDuration(Appointment appointment) {
-        Integer minutes = appointment.getService().getDurationMinutes();
-        return minutes != null && minutes > 0 ? minutes : DEFAULT_DURATION_MINUTES;
+        return appointment.totalDurationMinutes();
     }
 
     private static boolean overlaps(

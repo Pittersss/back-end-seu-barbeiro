@@ -82,6 +82,7 @@ abstract class IntegrationTestBase {
         // cascading truncate would also wipe the seeded admin.
         jdbc.update("DELETE FROM notifications");
         jdbc.update("DELETE FROM push_subscriptions");
+        jdbc.update("DELETE FROM appointment_services");
         jdbc.update("DELETE FROM appointments");
         jdbc.update("DELETE FROM time_blocks");
         jdbc.update("DELETE FROM client_blocks");
