@@ -16,4 +16,6 @@ public interface ClientBlockRepository extends JpaRepository<ClientBlock, Long> 
     Optional<ClientBlock> findByBarberIdAndClientId(Long barberId, Long clientId);
 
     void deleteByClientId(Long clientId);
+
+    void deleteByBarberId(Long barberId);
 }

@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface ServiceRepository extends JpaRepository<Service, Long> {
 
     List<Service> findByBarberShopId(Long barberShopId);
+
+    List<Service> findByBarberId(Long barberId);
 }

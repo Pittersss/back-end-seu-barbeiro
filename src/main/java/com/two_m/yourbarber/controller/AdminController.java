@@ -64,6 +64,17 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/barbers")
+    public ResponseEntity<List<UserProfileDTO>> listBarbers() {
+        return ResponseEntity.ok(adminService.listBarbers());
+    }
+
+    @DeleteMapping("/barbers/{id}")
+    public ResponseEntity<Void> deleteBarber(@PathVariable Long id) {
+        adminService.deleteBarber(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/barbershops/{id}")
     public ResponseEntity<Void> deleteBarberShop(@PathVariable Long id) {
         adminService.deleteBarberShop(id);

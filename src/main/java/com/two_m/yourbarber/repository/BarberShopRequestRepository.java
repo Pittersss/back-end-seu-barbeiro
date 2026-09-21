@@ -10,4 +10,6 @@ import org.springframework.stereotype.Repository;
 public interface BarberShopRequestRepository extends JpaRepository<BarberShopRequest, Long> {
 
     List<BarberShopRequest> findByStatus(RequestStatus status);
+
+    void deleteByRequesterId(Long requesterId);
 }

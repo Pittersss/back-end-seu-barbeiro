@@ -11,6 +11,8 @@ public interface TimeBlockRepository extends JpaRepository<TimeBlock, Long> {
 
     List<TimeBlock> findByBarberId(Long barberId);
 
+    void deleteByBarberId(Long barberId);
+
     List<TimeBlock> findByBarberIdAndEndsAtAfterOrderByStartsAt(
             Long barberId, LocalDateTime after);
 }

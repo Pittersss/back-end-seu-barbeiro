@@ -37,6 +37,14 @@ export function deleteClient(id: number) {
   return request<void>(`/api/admin/clients/${id}`, { method: 'DELETE' });
 }
 
+export function listBarbers() {
+  return request<UserProfile[]>('/api/admin/barbers');
+}
+
+export function deleteBarber(id: number) {
+  return request<void>(`/api/admin/barbers/${id}`, { method: 'DELETE' });
+}
+
 export function deleteBarberShop(id: number) {
   return request<void>(`/api/admin/barbershops/${id}`, { method: 'DELETE' });
 }

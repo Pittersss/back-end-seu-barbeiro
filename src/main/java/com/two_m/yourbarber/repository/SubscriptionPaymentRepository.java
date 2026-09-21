@@ -12,4 +12,6 @@ public interface SubscriptionPaymentRepository extends JpaRepository<Subscriptio
     List<SubscriptionPayment> findByBarberIdOrderByCreatedAtDesc(Long barberId);
 
     List<SubscriptionPayment> findByStatus(SubscriptionPaymentStatus status);
+
+    void deleteByBarberId(Long barberId);
 }

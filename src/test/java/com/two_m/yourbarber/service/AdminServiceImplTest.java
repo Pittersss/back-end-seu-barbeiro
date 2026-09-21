@@ -29,6 +29,9 @@ import com.two_m.yourbarber.repository.ClientRepository;
 import com.two_m.yourbarber.repository.JoinRequestRepository;
 import com.two_m.yourbarber.repository.NotificationRepository;
 import com.two_m.yourbarber.repository.PushSubscriptionRepository;
+import com.two_m.yourbarber.repository.ServiceRepository;
+import com.two_m.yourbarber.repository.SubscriptionPaymentRepository;
+import com.two_m.yourbarber.repository.TimeBlockRepository;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -52,6 +55,9 @@ class AdminServiceImplTest {
     @Mock private PushSubscriptionRepository pushSubscriptionRepository;
     @Mock private ClientBlockRepository clientBlockRepository;
     @Mock private JoinRequestRepository joinRequestRepository;
+    @Mock private ServiceRepository serviceRepository;
+    @Mock private TimeBlockRepository timeBlockRepository;
+    @Mock private SubscriptionPaymentRepository subscriptionPaymentRepository;
     @Mock private NotificationService notificationService;
 
     @InjectMocks private AdminServiceImpl adminService;
@@ -225,6 +231,70 @@ class AdminServiceImplTest {
         verify(barberRepository, times(2)).save(any());
         verify(joinRequestRepository).deleteByBarberShopId(5L);
         verify(barberShopRepository).delete(shop);
+    }
+
+    @Test
+    void deleteBarberShop_removesShopAppointmentsFirst() {
+        Barber owner = requester(1L);
+        BarberShop shop = BarberShop.builder().name("Shop").owner(owner).build();
+        shop.setId(5L);
+        owner.setBarberShop(shop);
+        shop.setBarbers(List.of(owner));
+        Appointment appointment = Appointment.builder().build();
+        appointment.setId(7L);
+        when(barberShopRepository.findById(5L)).thenReturn(Optional.of(shop));
+        when(appointmentRepository.findByServiceBarberShopId(5L)).thenReturn(List.of(appointment));
+
+        adminService.deleteBarberShop(5L);
+
+        verify(notificationRepository).deleteByAppointmentIdIn(List.of(7L));
+        verify(appointmentRepository).deleteAll(List.of(appointment));
+        verify(barberShopRepository).delete(shop);
+    }
+
+    @Test
+    void deleteBarber_member_removesDependentsAndBarber() {
+        Barber owner = requester(1L);
+        BarberShop shop = BarberShop.builder().name("Shop").owner(owner).build();
+        shop.setId(5L);
+        Barber member = requester(2L);
+        member.setBarberShop(shop);
+        when(barberRepository.findById(2L)).thenReturn(Optional.of(member));
+
+        adminService.deleteBarber(2L);
+
+        assertThat(member.getBarberShop()).isNull();
+        verify(timeBlockRepository).deleteByBarberId(2L);
+        verify(clientBlockRepository).deleteByBarberId(2L);
+        verify(subscriptionPaymentRepository).deleteByBarberId(2L);
+        verify(joinRequestRepository).deleteByBarberId(2L);
+        verify(barberShopRequestRepository).deleteByRequesterId(2L);
+        verify(pushSubscriptionRepository).deleteByUserId(2L);
+        verify(barberShopRepository, never()).delete(any());
+        verify(barberRepository).delete(member);
+    }
+
+    @Test
+    void deleteBarber_owner_deletesShopToo() {
+        Barber owner = requester(1L);
+        BarberShop shop = BarberShop.builder().name("Shop").owner(owner).build();
+        shop.setId(5L);
+        owner.setBarberShop(shop);
+        shop.setBarbers(List.of(owner));
+        when(barberRepository.findById(1L)).thenReturn(Optional.of(owner));
+        when(barberShopRepository.findById(5L)).thenReturn(Optional.of(shop));
+
+        adminService.deleteBarber(1L);
+
+        verify(barberShopRepository).delete(shop);
+        verify(barberRepository).delete(owner);
+    }
+
+    @Test
+    void deleteBarber_notFound_throws() {
+        when(barberRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> adminService.deleteBarber(99L));
     }
 
     @Test

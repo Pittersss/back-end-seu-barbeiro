@@ -19,5 +19,9 @@ public interface AdminService {
 
     void deleteBarberShop(Long shopId);
 
+    List<UserProfileDTO> listBarbers();
+
+    void deleteBarber(Long barberId);
+
     Page<AppointmentResponseDTO> listAppointments(Pageable pageable);
 }

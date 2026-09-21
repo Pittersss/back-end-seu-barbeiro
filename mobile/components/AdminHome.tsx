@@ -17,9 +17,11 @@ import { ConfirmDialog } from './ConfirmDialog';
 import {
   decideBarberShopRequest,
   decideSubscriptionPayment,
+  deleteBarber,
   deleteBarberShop,
   deleteClient,
   listBarberShopRequests,
+  listBarbers,
   listClients,
   listPendingSubscriptionPayments,
 } from '../lib/api/admin';
@@ -38,7 +40,7 @@ import { useThemeColors } from '../theme/ThemeContext';
 import { typography } from '../theme/typography';
 import { useThemedStyles } from '../theme/useThemedStyles';
 
-type PendingDelete = { type: 'shop' | 'client'; id: number; label: string };
+type PendingDelete = { type: 'shop' | 'client' | 'barber'; id: number; label: string };
 
 export function AdminHome() {
   const colors = useThemeColors();
@@ -129,6 +131,7 @@ export function AdminHome() {
   const [payments, setPayments] = useState<SubscriptionPaymentResponse[]>([]);
   const [shops, setShops] = useState<BarberShop[]>([]);
   const [clients, setClients] = useState<UserProfile[]>([]);
+  const [barbers, setBarbers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -138,16 +141,18 @@ export function AdminHome() {
 
   const load = useCallback(async () => {
     try {
-      const [requests, pendingPayments, allShops, allClients] = await Promise.all([
+      const [requests, pendingPayments, allShops, allClients, allBarbers] = await Promise.all([
         listBarberShopRequests(),
         listPendingSubscriptionPayments(),
         listBarberShops(),
         listClients(),
+        listBarbers(),
       ]);
       setShopRequests(requests);
       setPayments(pendingPayments);
       setShops(allShops);
       setClients(allClients);
+      setBarbers(allBarbers);
     } catch {
       // A 401 here means the session was stale/invalid; AuthContext's
       // unauthorized handler already clears it and redirects to login.
@@ -191,6 +196,11 @@ export function AdminHome() {
       if (pendingDelete.type === 'shop') {
         await deleteBarberShop(pendingDelete.id);
         setShops((prev) => prev.filter((s) => s.id !== pendingDelete.id));
+      } else if (pendingDelete.type === 'barber') {
+        await deleteBarber(pendingDelete.id);
+        setBarbers((prev) => prev.filter((b) => b.id !== pendingDelete.id));
+        // Deleting an owner also removes their shop; refetch to reflect it.
+        setShops(await listBarberShops());
       } else {
         await deleteClient(pendingDelete.id);
         setClients((prev) => prev.filter((c) => c.id !== pendingDelete.id));
@@ -328,6 +338,34 @@ export function AdminHome() {
           ))
         )}
 
+        <Text style={styles.sectionTitle}>Barbeiros</Text>
+        {barbers.length === 0 ? (
+          <Card style={styles.card}>
+            <Text style={styles.emptyText}>Nenhum barbeiro cadastrado.</Text>
+          </Card>
+        ) : (
+          barbers.map((b) => (
+            <Card key={b.id} style={styles.card}>
+              <View style={styles.statusRow}>
+                <Avatar name={b.name} avatarBase64={b.avatarBase64} size={32} />
+                <View>
+                  <Text style={styles.itemTitle}>{b.name}</Text>
+                  <Text style={styles.itemSubtitle}>{b.email}</Text>
+                </View>
+              </View>
+              <View style={styles.actionRow}>
+                <Button
+                  title="Excluir"
+                  variant="outline"
+                  size="sm"
+                  onPress={() => setPendingDelete({ type: 'barber', id: b.id, label: b.name })}
+                  style={[styles.actionButton, styles.deleteButton]}
+                />
+              </View>
+            </Card>
+          ))
+        )}
+
         <Text style={styles.sectionTitle}>Clientes</Text>
         {clients.length === 0 ? (
           <Card style={styles.card}>
@@ -359,11 +397,19 @@ export function AdminHome() {
 
       <ConfirmDialog
         visible={pendingDelete !== null}
-        title={pendingDelete?.type === 'shop' ? 'Excluir barbearia?' : 'Excluir cliente?'}
+        title={
+          pendingDelete?.type === 'shop'
+            ? 'Excluir barbearia?'
+            : pendingDelete?.type === 'barber'
+              ? 'Excluir barbeiro?'
+              : 'Excluir cliente?'
+        }
         message={
           pendingDelete?.type === 'shop'
             ? `"${pendingDelete.label}" será removida permanentemente. O dono não poderá criar outra barbearia.`
-            : `"${pendingDelete?.label}" e todo o seu histórico de agendamentos serão removidos permanentemente.`
+            : pendingDelete?.type === 'barber'
+              ? `"${pendingDelete.label}", sua agenda e histórico serão removidos permanentemente. Se for dono de uma barbearia, ela também será excluída.`
+              : `"${pendingDelete?.label}" e todo o seu histórico de agendamentos serão removidos permanentemente.`
         }
         confirmLabel="Excluir"
         cancelLabel="Voltar"

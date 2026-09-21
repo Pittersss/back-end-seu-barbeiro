@@ -24,6 +24,9 @@ import com.two_m.yourbarber.repository.ClientRepository;
 import com.two_m.yourbarber.repository.JoinRequestRepository;
 import com.two_m.yourbarber.repository.NotificationRepository;
 import com.two_m.yourbarber.repository.PushSubscriptionRepository;
+import com.two_m.yourbarber.repository.ServiceRepository;
+import com.two_m.yourbarber.repository.SubscriptionPaymentRepository;
+import com.two_m.yourbarber.repository.TimeBlockRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +49,9 @@ public class AdminServiceImpl implements AdminService {
     private final PushSubscriptionRepository pushSubscriptionRepository;
     private final ClientBlockRepository clientBlockRepository;
     private final JoinRequestRepository joinRequestRepository;
+    private final ServiceRepository serviceRepository;
+    private final TimeBlockRepository timeBlockRepository;
+    private final SubscriptionPaymentRepository subscriptionPaymentRepository;
     private final NotificationService notificationService;
 
     @Override
@@ -118,13 +124,8 @@ public class AdminServiceImpl implements AdminService {
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("Client not found: " + clientId));
 
-        List<Appointment> appointments = appointmentRepository.findByClientId(clientId);
-        List<Long> appointmentIds = appointments.stream().map(Appointment::getId).toList();
-        if (!appointmentIds.isEmpty()) {
-            notificationRepository.deleteByAppointmentIdIn(appointmentIds);
-        }
+        deleteAppointments(appointmentRepository.findByClientId(clientId));
         notificationRepository.deleteByRecipientId(clientId);
-        appointmentRepository.deleteAll(appointments);
         pushSubscriptionRepository.deleteByUserId(clientId);
         clientBlockRepository.deleteByClientId(clientId);
 
@@ -140,6 +141,10 @@ public class AdminServiceImpl implements AdminService {
                                 () -> new ResourceNotFoundException("Barbershop not found: " + shopId));
 
         Barber owner = shop.getOwner();
+
+        // Appointments point at the shop's services (NO ACTION FK), so they must go
+        // before the cascade removes the services.
+        deleteAppointments(appointmentRepository.findByServiceBarberShopId(shopId));
 
         for (Barber member : List.copyOf(shop.getBarbers())) {
             member.setBarberShop(null);
@@ -158,6 +163,57 @@ public class AdminServiceImpl implements AdminService {
 
         joinRequestRepository.deleteByBarberShopId(shopId);
         barberShopRepository.delete(shop);
+        barberShopRepository.flush();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserProfileDTO> listBarbers() {
+        return barberRepository.findAll().stream().map(UserMapper::toProfileDto).toList();
+    }
+
+    @Override
+    public void deleteBarber(Long barberId) {
+        Barber barber =
+                barberRepository
+                        .findById(barberId)
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("Barber not found: " + barberId));
+
+        BarberShop shop = barber.getBarberShop();
+        if (shop != null && shop.getOwner() != null && shop.getOwner().getId().equals(barberId)) {
+            deleteBarberShop(shop.getId());
+        } else if (shop != null) {
+            barber.setBarberShop(null);
+            barberRepository.save(barber);
+        }
+
+        deleteAppointments(appointmentRepository.findByBarberId(barberId));
+        for (com.two_m.yourbarber.model.Service service : serviceRepository.findByBarberId(barberId)) {
+            deleteAppointments(appointmentRepository.findByServiceId(service.getId()));
+            serviceRepository.delete(service);
+        }
+        serviceRepository.flush();
+
+        timeBlockRepository.deleteByBarberId(barberId);
+        clientBlockRepository.deleteByBarberId(barberId);
+        subscriptionPaymentRepository.deleteByBarberId(barberId);
+        joinRequestRepository.deleteByBarberId(barberId);
+        barberShopRequestRepository.deleteByRequesterId(barberId);
+        notificationRepository.deleteByRecipientId(barberId);
+        pushSubscriptionRepository.deleteByUserId(barberId);
+
+        barberRepository.delete(barber);
+    }
+
+    private void deleteAppointments(List<Appointment> appointments) {
+        if (appointments.isEmpty()) {
+            return;
+        }
+        notificationRepository.deleteByAppointmentIdIn(
+                appointments.stream().map(Appointment::getId).toList());
+        appointmentRepository.deleteAll(appointments);
+        appointmentRepository.flush();
     }
 
     @Override

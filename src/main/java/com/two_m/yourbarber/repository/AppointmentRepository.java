@@ -13,6 +13,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     List<Appointment> findByBarberId(Long barberId);
 
+    List<Appointment> findByServiceBarberShopId(Long barberShopId);
+
+    List<Appointment> findByServiceId(Long serviceId);
+
     List<Appointment> findByBarberIdAndScheduledAtBetween(
             Long barberId, LocalDateTime start, LocalDateTime end);
 }
