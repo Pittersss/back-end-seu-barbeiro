@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState, type R
 import * as authApi from '../lib/api/auth';
 import { getMe } from '../lib/api/users';
 import { setAuthToken, setUnauthorizedHandler } from '../lib/api';
+import { disablePush } from '../lib/webPush';
 import * as storage from '../lib/storage';
 import type {
   AuthResponse,
@@ -141,7 +142,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           avatarBase64: profile.avatarBase64 ?? null,
         });
       },
-      logout: clearSession,
+      logout: async () => {
+        // Needs the token, so detach this device from push before the session is dropped.
+        await disablePush();
+        await clearSession();
+      },
     }),
     [session, isLoading],
   );

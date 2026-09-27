@@ -112,4 +112,23 @@ class PushServiceImplTest {
 
         verify(pushService, never()).deliverWebPush(any(), any());
     }
+
+    @Test
+    void sendTest_countsOnlyDeliveriesTheBrowserPushServiceAccepted() throws Exception {
+        PushSubscription ok = webSubscription(1L, "https://push.example.com/ok");
+        PushSubscription rejected = webSubscription(2L, "https://push.example.com/bad");
+        when(pushSubscriptionRepository.findByUserId(1L)).thenReturn(List.of(ok, rejected));
+        doReturn(201).doReturn(403).when(pushService).deliverWebPush(any(), any());
+
+        org.assertj.core.api.Assertions.assertThat(pushService.sendTest(1L)).isEqualTo(1);
+        // a 403 (e.g. VAPID mismatch) must not delete the subscription
+        verify(pushSubscriptionRepository, never()).deleteByEndpoint(any());
+    }
+
+    @Test
+    void sendTest_noSubscriptions_returnsZero() {
+        when(pushSubscriptionRepository.findByUserId(1L)).thenReturn(List.of());
+
+        org.assertj.core.api.Assertions.assertThat(pushService.sendTest(1L)).isZero();
+    }
 }

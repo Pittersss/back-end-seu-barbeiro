@@ -1,6 +1,7 @@
 package com.two_m.yourbarber.controller;
 
 import com.two_m.yourbarber.dto.push.PushSubscriptionRequestDTO;
+import com.two_m.yourbarber.dto.push.PushTestResponseDTO;
 import com.two_m.yourbarber.dto.push.PushUnsubscribeRequestDTO;
 import com.two_m.yourbarber.dto.push.VapidPublicKeyResponseDTO;
 import com.two_m.yourbarber.model.User;
@@ -37,6 +38,13 @@ public class PushController {
             @AuthenticationPrincipal User currentUser) {
         pushService.subscribe(currentUser.getId(), dto);
         return ResponseEntity.noContent().build();
+    }
+
+    /** Sends a test push to the caller's own devices; returns how many were accepted. */
+    @PostMapping("/test")
+    public ResponseEntity<PushTestResponseDTO> test(@AuthenticationPrincipal User currentUser) {
+        int delivered = pushService.sendTest(currentUser.getId());
+        return ResponseEntity.ok(new PushTestResponseDTO(delivered));
     }
 
     @DeleteMapping("/subscriptions")

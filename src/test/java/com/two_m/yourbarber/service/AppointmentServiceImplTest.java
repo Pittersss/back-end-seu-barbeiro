@@ -124,7 +124,7 @@ class AppointmentServiceImplTest {
                         PaymentMethod.PIX);
         AppointmentResponseDTO result = appointmentService.createAppointment(dto, 1L);
 
-        assertThat(result.getStatus()).isEqualTo(AppointmentStatus.PENDING);
+        assertThat(result.getStatus()).isEqualTo(AppointmentStatus.CONFIRMED);
         assertThat(result.getBarberId()).isEqualTo(2L);
         verify(notificationService)
                 .notify(eq(2L), eq(NotificationType.APPOINTMENT_REQUESTED), any(), any());

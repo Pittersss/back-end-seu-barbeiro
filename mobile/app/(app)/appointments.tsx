@@ -354,11 +354,6 @@ export default function AppointmentsScreen() {
                   </Pressable>
                 ) : null}
 
-                {isBarber && item.status === 'PENDING' ? (
-                  <Pressable disabled={busy} onPress={() => handleAdvanceStatus(item, 'CONFIRMED')}>
-                    <Text style={styles.linkAction}>Confirmar</Text>
-                  </Pressable>
-                ) : null}
                 {canComplete ? (
                   <Pressable disabled={busy} onPress={() => handleAdvanceStatus(item, 'COMPLETED')}>
                     <Text style={styles.linkAction}>Concluir</Text>

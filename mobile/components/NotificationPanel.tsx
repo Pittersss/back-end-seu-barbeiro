@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { FlatList, Modal, Pressable, Text, View } from 'react-native';
 
 import { useNotifications } from '../context/NotificationContext';
@@ -62,6 +63,27 @@ export function NotificationPanel({ visible, onClose }: NotificationPanelProps) 
       fontSize: 12,
       fontWeight: '600',
     },
+    pushBox: {
+      backgroundColor: colors.blueSoft,
+      borderRadius: radius.card,
+      padding: spacing.md,
+      marginBottom: spacing.sm,
+      gap: spacing.xs,
+    },
+    pushText: {
+      fontSize: 13,
+      lineHeight: 18,
+      color: colors.black,
+    },
+    pushAction: {
+      color: colors.blue,
+      fontSize: 13,
+      fontWeight: '700',
+    },
+    pushResult: {
+      fontSize: 12,
+      color: colors.textMuted,
+    },
     list: {
       marginTop: spacing.xs,
     },
@@ -106,7 +128,37 @@ export function NotificationPanel({ visible, onClose }: NotificationPanelProps) 
       marginTop: 2,
     },
   }));
-  const { notifications, unreadCount, markAllRead, markRead } = useNotifications();
+  const { notifications, unreadCount, markAllRead, markRead, pushState, enablePush, sendTestPush } =
+    useNotifications();
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushResult, setPushResult] = useState<string | null>(null);
+
+  async function handleEnable() {
+    setPushBusy(true);
+    setPushResult(null);
+    try {
+      await enablePush();
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function handleTest() {
+    setPushBusy(true);
+    setPushResult(null);
+    try {
+      const delivered = await sendTestPush();
+      setPushResult(
+        delivered > 0
+          ? `Enviada para ${delivered} aparelho${delivered > 1 ? 's' : ''}. Deve chegar em instantes.`
+          : 'Nenhum aparelho recebeu. Toque em "Ativar notificações" de novo ou reabra o app.',
+      );
+    } catch {
+      setPushResult('Não foi possível enviar o teste agora.');
+    } finally {
+      setPushBusy(false);
+    }
+  }
 
   function handlePress(item: NotificationItem) {
     onClose();
@@ -129,6 +181,59 @@ export function NotificationPanel({ visible, onClose }: NotificationPanelProps) 
               </Pressable>
             ) : null}
           </View>
+
+          {pushState === 'prompt' ? (
+            <View style={styles.pushBox}>
+              <Text style={styles.pushText}>
+                Receba avisos de agendamento neste aparelho, mesmo com o app fechado.
+              </Text>
+              <Pressable onPress={handleEnable} disabled={pushBusy}>
+                <Text style={styles.pushAction}>{pushBusy ? 'Ativando…' : 'Ativar notificações'}</Text>
+              </Pressable>
+            </View>
+          ) : null}
+          {pushState === 'denied' ? (
+            <View style={styles.pushBox}>
+              <Text style={styles.pushText}>
+                As notificações estão bloqueadas neste navegador. Libere nas configurações do site
+                (cadeado ao lado do endereço) e recarregue a página.
+              </Text>
+            </View>
+          ) : null}
+          {pushState === 'needs-install' ? (
+            <View style={styles.pushBox}>
+              <Text style={styles.pushText}>
+                No iPhone, as notificações só funcionam com o app na Tela de Início: toque em
+                Compartilhar → Adicionar à Tela de Início e abra o Seu Barbeiro por lá.
+              </Text>
+            </View>
+          ) : null}
+          {pushState === 'insecure' ? (
+            <View style={styles.pushBox}>
+              <Text style={styles.pushText}>
+                Notificações no celular exigem conexão segura (https). Acesse pelo endereço oficial
+                do app.
+              </Text>
+            </View>
+          ) : null}
+          {pushState === 'unsupported' ? (
+            <View style={styles.pushBox}>
+              <Text style={styles.pushText}>
+                Este navegador não suporta notificações push. Os avisos continuam aparecendo aqui
+                dentro.
+              </Text>
+            </View>
+          ) : null}
+          {pushState === 'ready' ? (
+            <View style={styles.pushBox}>
+              <Pressable onPress={handleTest} disabled={pushBusy}>
+                <Text style={styles.pushAction}>
+                  {pushBusy ? 'Enviando…' : 'Notificações ativas · enviar teste'}
+                </Text>
+              </Pressable>
+              {pushResult ? <Text style={styles.pushResult}>{pushResult}</Text> : null}
+            </View>
+          ) : null}
 
           <FlatList
             data={notifications}

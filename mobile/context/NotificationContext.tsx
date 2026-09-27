@@ -1,13 +1,15 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { router } from 'expo-router';
 import { AppState, Platform } from 'react-native';
 
 import { useAuth } from './AuthContext';
 import * as notificationsApi from '../lib/api/notifications';
-import * as pushApi from '../lib/api/push';
+import * as webPush from '../lib/webPush';
+import type { PushState } from '../lib/webPush';
 import type { NotificationItem } from '../lib/types';
 
 // Cheap unread-count poll; the full list is only refetched when the count changes.
-const POLL_INTERVAL_MS = 5000;
+const POLL_INTERVAL_MS = 3000;
 
 interface NotificationContextValue {
   notifications: NotificationItem[];
@@ -15,80 +17,19 @@ interface NotificationContextValue {
   refresh: () => Promise<void>;
   markAllRead: () => Promise<void>;
   markRead: (id: number) => Promise<void>;
+  /** Web push readiness on this device — drives the "ativar notificações" banner. */
+  pushState: PushState;
+  enablePush: () => Promise<void>;
+  sendTestPush: () => Promise<number>;
 }
 
 const NotificationContext = createContext<NotificationContextValue | undefined>(undefined);
-
-function urlBase64ToUint8Array(base64Url: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64Url.length % 4)) % 4);
-  const base64 = (base64Url + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const raw = atob(base64);
-  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
-}
-
-async function registerWebPush() {
-  if (
-    Platform.OS !== 'web' ||
-    typeof navigator === 'undefined' ||
-    !('serviceWorker' in navigator) ||
-    typeof window === 'undefined' ||
-    !('PushManager' in window) ||
-    !('Notification' in window)
-  ) {
-    return;
-  }
-  try {
-    if (Notification.permission === 'default') {
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') return;
-    }
-    if (Notification.permission !== 'granted') return;
-
-    const registration = await navigator.serviceWorker.register('/service-worker.js');
-    const { publicKey } = await pushApi.getVapidPublicKey();
-    if (!publicKey) return;
-
-    let subscription = await registration.pushManager.getSubscription();
-    if (!subscription) {
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
-      });
-    }
-
-    const json = subscription.toJSON();
-    if (!json.endpoint || !json.keys) return;
-    await pushApi.subscribePush({
-      platform: 'WEB',
-      endpoint: json.endpoint,
-      p256dh: json.keys.p256dh,
-      authKey: json.keys.auth,
-    });
-  } catch {
-    // Push is a progressive enhancement — never block the app on it.
-  }
-}
-
-async function unregisterWebPush() {
-  if (Platform.OS !== 'web' || typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
-    return;
-  }
-  try {
-    const registration = await navigator.serviceWorker.getRegistration();
-    const subscription = await registration?.pushManager.getSubscription();
-    if (subscription) {
-      await pushApi.unsubscribePush({ endpoint: subscription.endpoint });
-    }
-  } catch {
-    // Best-effort cleanup only.
-  }
-}
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const wasLoggedIn = useRef(false);
+  const [pushState, setPushState] = useState<PushState>('native');
 
   const lastCount = useRef(-1);
 
@@ -113,25 +54,32 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!session) {
-      if (wasLoggedIn.current) {
-        unregisterWebPush();
-      }
-      wasLoggedIn.current = false;
       setNotifications([]);
       setUnreadCount(0);
       return;
     }
-    wasLoggedIn.current = true;
     lastCount.current = -1;
     refresh();
-    registerWebPush();
+    // Silent for users who already granted permission; a first-time prompt needs a tap (banner).
+    webPush.syncPush().then(setPushState);
     const interval = setInterval(() => refresh(false), POLL_INTERVAL_MS);
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') refresh();
     });
+    // The service worker pings open tabs the moment a push lands, so the bell updates
+    // instantly instead of waiting for the next poll.
+    const onWorkerMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'navigate' && typeof event.data.url === 'string') {
+        router.push(event.data.url as never);
+      }
+      refresh();
+    };
+    const canListen = Platform.OS === 'web' && typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
+    if (canListen) navigator.serviceWorker.addEventListener('message', onWorkerMessage);
     return () => {
       clearInterval(interval);
       sub.remove();
+      if (canListen) navigator.serviceWorker.removeEventListener('message', onWorkerMessage);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.userId]);
@@ -147,6 +95,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
         setUnreadCount(0);
       },
+      pushState,
+      enablePush: async () => {
+        setPushState(await webPush.enablePush());
+      },
+      sendTestPush: webPush.sendTestPush,
       markRead: async (id: number) => {
         const target = notifications.find((n) => n.id === id);
         if (!target || target.read) return;
@@ -155,7 +108,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         setUnreadCount((prev) => Math.max(0, prev - 1));
       },
     }),
-    [notifications, unreadCount],
+    [notifications, unreadCount, pushState],
   );
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;

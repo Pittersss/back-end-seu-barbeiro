@@ -27,7 +27,7 @@ class BookingRulesIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    void clientBooksInsideWindow_isCreatedPending() throws Exception {
+    void clientBooksInsideWindow_isCreatedConfirmed() throws Exception {
         Shop shop = shopWith30MinService(9, 18, null, null);
         Actor client = registerClient();
 
@@ -39,7 +39,7 @@ class BookingRulesIntegrationTest extends IntegrationTestBase {
                                 bookingPayload(shop.owner().id(), shop.serviceId(), nextMondayAt(10, 0)),
                                 201));
 
-        assertThat(created.get("status").asText()).isEqualTo("PENDING");
+        assertThat(created.get("status").asText()).isEqualTo("CONFIRMED");
         assertThat(created.get("clientId").asLong()).isEqualTo(client.id());
         assertThat(created.get("barberId").asLong()).isEqualTo(shop.owner().id());
     }

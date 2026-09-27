@@ -71,7 +71,7 @@ public class NotificationServiceImpl implements NotificationService {
                         .appointment(appointment)
                         .build();
         notificationRepository.save(notification);
-        pushAfterCommit(recipientId, message);
+        pushAfterCommit(recipientId, message, routeFor(type));
     }
 
     /**
@@ -79,11 +79,11 @@ public class NotificationServiceImpl implements NotificationService {
      * caller's request nor fire before the notification row is visible to the recipient's next
      * poll — hence: after the transaction commits, on a background thread.
      */
-    private void pushAfterCommit(Long recipientId, String message) {
+    private void pushAfterCommit(Long recipientId, String message, String url) {
         Runnable send =
                 () ->
                         CompletableFuture.runAsync(
-                                () -> pushService.sendToUser(recipientId, PUSH_TITLE, message));
+                                () -> pushService.sendToUser(recipientId, PUSH_TITLE, message, url));
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(
                     new TransactionSynchronization() {
@@ -95,6 +95,17 @@ public class NotificationServiceImpl implements NotificationService {
         } else {
             send.run();
         }
+    }
+
+    /** App path opened when the push is tapped — mirrors NOTIFICATION_ROUTES on the mobile side. */
+    private static String routeFor(NotificationType type) {
+        return switch (type) {
+            case APPOINTMENT_REQUESTED, APPOINTMENT_CONFIRMED, APPOINTMENT_CANCELLED ->
+                    "/appointments";
+            case SUBSCRIPTION_PAYMENT_DECIDED -> "/subscription";
+            case JOIN_REQUEST -> "/join-requests";
+            default -> "/home";
+        };
     }
 
     private Notification findNotification(Long id) {

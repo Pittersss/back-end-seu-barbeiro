@@ -64,7 +64,7 @@ class CancellationIntegrationTest extends IntegrationTestBase {
 
         patch("/api/appointments/" + b.appointmentId() + "/cancel", stranger.token(), null, 403);
 
-        assertThat(statusOf(b.client(), b.appointmentId())).isEqualTo("PENDING");
+        assertThat(statusOf(b.client(), b.appointmentId())).isEqualTo("CONFIRMED");
     }
 
     @Test

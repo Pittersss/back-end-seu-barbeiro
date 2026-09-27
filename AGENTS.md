@@ -112,6 +112,15 @@ mobile/                 Expo Router app (TypeScript), see mobile/README.md
   notification in `components/NotificationPanel.tsx` marks it read and navigates via
   the static `NOTIFICATION_ROUTES` map in that file — a new `NotificationType` needs
   an entry there too, or it's a dead-end tap.
+  **Web push on phones** (`lib/webPush.ts`, `public/service-worker.js`,
+  `POST /api/push/test`): needs https, permission granted *from a tap* (the bell's
+  banner in `NotificationPanel.tsx` — never prompt cold), and on iOS the site installed
+  on the Home Screen (hence `public/manifest.webmanifest` + `public/index.html`, which
+  Expo uses as the single-output template; `app/+html.tsx` is ignored in this mode).
+  `getPushState()` names which requirement is missing; the panel's "enviar teste"
+  button hits the test endpoint. `PushServiceImpl` logs every non-2xx from a push
+  service — check the backend console first when pushes don't arrive. A new
+  `NotificationType` also needs a case in `NotificationServiceImpl.routeFor()`.
 
 ## Mobile conventions
 

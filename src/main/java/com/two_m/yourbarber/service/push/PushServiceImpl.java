@@ -99,35 +99,70 @@ public class PushServiceImpl implements PushService {
 
     @Override
     public void sendToUser(Long userId, String title, String body) {
+        sendToUser(userId, title, body, null);
+    }
+
+    @Override
+    public void sendToUser(Long userId, String title, String body, String url) {
+        deliverToUser(userId, title, body, url);
+    }
+
+    @Override
+    public int sendTest(Long userId) {
+        return deliverToUser(
+                userId, "Seu Barbeiro", "Notificações funcionando neste aparelho ✅", "/home");
+    }
+
+    private int deliverToUser(Long userId, String title, String body, String url) {
+        int delivered = 0;
         List<PushSubscription> subscriptions = pushSubscriptionRepository.findByUserId(userId);
         for (PushSubscription subscription : subscriptions) {
             try {
-                if (subscription.getPlatform() == PushPlatform.WEB) {
-                    sendWebPush(subscription, title, body);
-                } else {
-                    sendExpoPush(subscription, title, body);
+                int status =
+                        subscription.getPlatform() == PushPlatform.WEB
+                                ? sendWebPush(subscription, title, body, url)
+                                : sendExpoPush(subscription, title, body);
+                if (status >= 200 && status < 300) {
+                    delivered++;
+                } else if (status != 404 && status != 410 && status != 0) {
+                    // Anything else (401/403 = VAPID mismatch, 400/413 = bad payload, 429/5xx =
+                    // push service trouble) used to vanish silently — the reason a push "never
+                    // arrives" was invisible. Log it so it shows in the backend console.
+                    log.warn(
+                            "Push service rejected notification for user {} (subscription {}): HTTP {}",
+                            userId,
+                            subscription.getId(),
+                            status);
                 }
             } catch (Exception ex) {
                 log.warn("Failed to deliver push notification (subscription {})",
                         subscription.getId(), ex);
             }
         }
+        return delivered;
     }
 
-    private void sendWebPush(PushSubscription subscription, String title, String body)
+    private int sendWebPush(PushSubscription subscription, String title, String body, String url)
             throws Exception {
         if (vapidPublicKey == null || vapidPublicKey.isBlank()) {
-            return;
+            return 0;
         }
         String payload =
-                "{\"title\":\"" + jsonEscape(title) + "\",\"body\":\"" + jsonEscape(body) + "\"}";
+                "{\"title\":\""
+                        + jsonEscape(title)
+                        + "\",\"body\":\""
+                        + jsonEscape(body)
+                        + "\""
+                        + (url == null ? "" : ",\"url\":\"" + jsonEscape(url) + "\"")
+                        + "}";
         int status = deliverWebPush(subscription, payload);
         if (status == 404 || status == 410) {
             pushSubscriptionRepository.deleteByEndpoint(subscription.getEndpoint());
         }
+        return status;
     }
 
-    private void sendExpoPush(PushSubscription subscription, String title, String body)
+    private int sendExpoPush(PushSubscription subscription, String title, String body)
             throws Exception {
         String payload =
                 "{\"to\":\""
@@ -141,6 +176,7 @@ public class PushServiceImpl implements PushService {
         if (status == 404 || status == 410) {
             pushSubscriptionRepository.deleteByExpoPushToken(subscription.getExpoPushToken());
         }
+        return status;
     }
 
     /** Package-visible seam so tests can stub the actual VAPID/HTTP call. */
@@ -150,7 +186,9 @@ public class PushServiceImpl implements PushService {
                         subscription.getEndpoint(),
                         subscription.getP256dh(),
                         subscription.getAuthKey(),
-                        payload);
+                        payload,
+                        // "high" tells FCM/APNs to wake the device now instead of batching.
+                        nl.martijndwars.webpush.Urgency.HIGH);
         nl.martijndwars.webpush.PushService webPushClient =
                 new nl.martijndwars.webpush.PushService(
                         vapidPublicKey, vapidPrivateKey, vapidSubject);

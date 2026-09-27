@@ -97,6 +97,9 @@ public class AppointmentServiceImpl implements AppointmentService {
                 Appointment.builder()
                         .scheduledAt(dto.getScheduledAt())
                         .paymentMethod(dto.getPaymentMethod())
+                        // Bookings are auto-confirmed: the slot was validated against the
+                        // barber's real availability above, so no manual approval step.
+                        .status(AppointmentStatus.CONFIRMED)
                         .client(client)
                         .barber(barber)
                         .service(services.get(0))
@@ -107,7 +110,10 @@ public class AppointmentServiceImpl implements AppointmentService {
         notificationService.notify(
                 barber.getId(),
                 NotificationType.APPOINTMENT_REQUESTED,
-                client.getName() + " solicitou um horário em " + start.toLocalDate() + ".",
+                client.getName()
+                        + " agendou um horário para "
+                        + start.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM 'às' HH:mm"))
+                        + ".",
                 saved);
         return AppointmentMapper.toDto(saved);
     }

@@ -25,13 +25,23 @@ export function NotificationBell() {
       alignItems: 'center',
       justifyContent: 'center',
     },
+    setupDot: {
+      position: 'absolute',
+      top: -2,
+      right: -3,
+      width: 9,
+      height: 9,
+      borderRadius: 5,
+      backgroundColor: colors.warning,
+    },
     badgeText: {
       color: colors.onAccent,
       fontSize: 10,
       fontWeight: '700',
     },
   }));
-  const { unreadCount } = useNotifications();
+  const { unreadCount, pushState } = useNotifications();
+  const needsPushSetup = pushState === 'prompt' || pushState === 'needs-install';
   const [open, setOpen] = useState(false);
 
   return (
@@ -42,6 +52,8 @@ export function NotificationBell() {
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
           </View>
+        ) : needsPushSetup ? (
+          <View style={styles.setupDot} />
         ) : null}
       </Pressable>
       <NotificationPanel visible={open} onClose={() => setOpen(false)} />

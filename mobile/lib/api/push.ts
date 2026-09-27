@@ -9,6 +9,10 @@ export function subscribePush(payload: PushSubscriptionPayload) {
   return request<void>('/api/push/subscriptions', { method: 'POST', body: payload });
 }
 
+export function sendTestPush() {
+  return request<{ delivered: number }>('/api/push/test', { method: 'POST' });
+}
+
 export function unsubscribePush(payload: PushUnsubscribePayload) {
   return request<void>('/api/push/subscriptions', { method: 'DELETE', body: payload });
 }
